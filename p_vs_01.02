@@ -1,0 +1,33 @@
+import java.util.List;
+
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+
+public class videoSliderBar extends SwingWorker<Void, Integer> {
+
+	private long totaltime;
+	private double currentsliderValue;
+
+	videoSliderBar(long totaltime){
+		this.totaltime = totaltime;
+	}
+
+	@Override
+	protected Void doInBackground() throws Exception {
+		boolean yo = true;
+		while(yo){
+			currentsliderValue = Mainframe.mp.getTime()* 100/totaltime;
+			System.out.println(currentsliderValue);
+			Mainframe.videoSlider.setValue((int)currentsliderValue);
+			//publish();
+		}
+		return null;
+	}
+
+	@Override
+	protected void done() {
+
+	}
+
+}
