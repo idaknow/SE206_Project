@@ -1,0 +1,92 @@
+package GUI;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+
+
+/**
+ * GUI
+ * @author idaknow
+ */
+public class SubmitMergeMp3Frame {
+
+	protected JFrame psmp3;
+	protected JPanel pscontentPane;
+	protected JLabel lblA;
+
+	/**
+	 * This constructor creates a pop up frame that checks the user wants to submit the audio file to the video
+	 */
+	SubmitMergeMp3Frame() {
+		psmp3 = new JFrame();
+		psmp3.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		psmp3.setBounds(450, 170, 360, 180);
+		pscontentPane = new JPanel();
+		pscontentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		psmp3.setContentPane(pscontentPane);
+		pscontentPane.setLayout(null);
+
+		//_______________________________________________________________________________________ CONFIRM AUDIO & VIDEO LABEL
+		lblA = new JLabel("Do you want to submit this audio to this video?");
+		lblA.setBounds(12, 43, 426, 31);
+		pscontentPane.add(lblA);
+
+		//_______________________________________________________________________________________ CANCEL BUTTON
+		JButton btnCancel = new JButton("CANCEL");
+		btnCancel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				psmp3.setVisible(false);
+			}
+		});
+		btnCancel.setBounds(210, 100, 117, 25);
+		pscontentPane.add(btnCancel);
+
+		//_______________________________________________________________________________________ YES BUTTON
+		JButton btnYes = new JButton("YES");
+		btnYes.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				if ((Mainframe.getAudioSource() != null)){ // checks an audio source is mentioned
+
+					String userVideoName = nameFilePopup();//get file name to save video as
+
+					if (userVideoName != null){
+						Merge m = new Merge(userVideoName, true, null);
+						m.start();
+						psmp3.setVisible(false);
+					}
+				}
+			}
+
+			private String File(String string) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+		});
+		btnYes.setBounds(20, 100, 117, 25);
+		pscontentPane.add(btnYes);
+		psmp3.setVisible(true);
+	}
+	
+	/**
+	 * This creates a pop up asking for the new mp3 file name input
+	 */
+	private String nameFilePopup() {
+		String info = JOptionPane.showInputDialog(this, "Save new video File as:");
+		return info;
+	}
+	
+	/**
+	 * Launches an error message pop up to tell them of a specified string error
+	 */
+	public void errorMessage(String error){
+		JOptionPane.showMessageDialog(lblA, this, error, 0);
+	}
+	
+}
+
