@@ -1,0 +1,39 @@
+package GUI;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+
+public class ChooseAudioTypeFrame extends JFrame{
+
+	protected JFrame psmp3;
+	protected JPanel pscontentPane;
+
+	protected ChooseAudioTypeFrame(){
+		psmp3 = new JFrame();
+		psmp3.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		psmp3.setBounds(500, 170, 200, 170);
+		pscontentPane = new JPanel();
+		pscontentPane.setBorder(new EmptyBorder(0, 0, 5, 5));
+		psmp3.setContentPane(pscontentPane);
+		pscontentPane.setLayout(null);
+
+		JLabel lblA = new JLabel("Please select a video file");
+		lblA.setBounds(12, 43, 426, 31);
+		pscontentPane.add(lblA);
+		psmp3.setVisible(true);
+
+		JButton btnOK = new JButton("OK");
+		btnOK.setBounds(40, 100, 117, 25);
+		btnOK.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				psmp3.setVisible(false);
+			}
+		});
+		psmp3.getContentPane().add(btnOK);
+	}
+}
