@@ -1,0 +1,144 @@
+package GUI;
+import java.io.File;
+import java.io.IOException;
+
+import javax.swing.JOptionPane;
+
+/**
+ * Func
+ * @author idaknow
+ *
+ */
+public class Merge {
+
+	private String name;
+	private String extension;
+	private boolean acceptableName;
+	private boolean isVideo;
+	private String text;
+
+	Merge(String name, boolean isVideo, String text){
+		acceptableName = true;
+		this.name = name;
+		this.isVideo = isVideo;
+		this.text = text;
+	}
+
+	public void start(){
+		if (isVideo){
+			videoMerge();
+		}else {
+			commentaryMerge();
+		}
+	}
+
+	private void nameCheck(){
+		nameWithExtensions(name);// checks if the new mp3 name has extension .mp3
+
+		File f = new File(name + extension);// temporary file created
+		if (!checkForSpaces(name)){ // checks the name doesn't contain spaces & isn't null
+			errorMessage("Filename can't contain spaces");
+			acceptableName = false;
+		} else if (f.exists()) { // check file name doesn't already exist
+			errorMessage("This filename already exists");
+			acceptableName = false;
+		} else { // name doesn't exist and passed checkForSpaces
+			acceptableName = true;
+		}
+	}
+
+	protected void commentaryMerge(){
+		nameCheck();
+		if (acceptableName){ // if the name isn't null or already exists
+
+			String commentary = "echo "+ "\"" + text + "\"";
+			ProcessBuilder pb1 = new ProcessBuilder("/bin/bash","-c", commentary + " > .filename.txt");// creates/ overwrites a temp hidden file with commentary in
+			//creates mp3 file using commentary file (above)
+			ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c","text2wave .filename.txt -o " + name + extension);
+			try {
+				Process p1 = pb1.start();
+				p1.waitFor();
+				Process p = pb.start();
+				// add loading popup here
+				p.waitFor();
+				// closes popup here
+			} catch (IOException | InterruptedException e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+
+	protected void videoMerge(){
+		nameCheck();
+
+		if (acceptableName){
+			//delete's audio off actual video
+			String cmd1 = "ffmpeg -i " + Mainframe.getVideoSource() + " -an .vid.avi";
+			ProcessBuilder pb1 = new ProcessBuilder("/bin/bash", "-c", cmd1);
+
+			try {
+				Process p1 = pb1.start();
+			} catch (IOException e1) { e1.printStackTrace(); }
+			Mainframe.setVideoSource(".vid.avi"); // new audio-less video
+
+			String videoPath = null;
+			videoPath = System.getProperty("user.dir") + "/" +name + extension;
+
+			//merges audio & video
+			String cmd2 = "ffmpeg -i " + Mainframe.getVideoSource() + " -i " + Mainframe.getAudioSource() + " " + videoPath/* + userVideoName + extension*/; //combines the video and audio
+			ProcessBuilder pb2 = new ProcessBuilder("/bin/bash", "-c", cmd2);
+			try {
+				Process p2 = pb2.start();
+				errorMessage("Loading video, please wait");// popup here
+				p2.waitFor(); // waits for process to be finished
+				errorMessage("Finished merge, video is now playing");// popup here
+
+				// closes popup here
+			} catch (IOException | InterruptedException e1) {e1.printStackTrace();}
+
+			//close all windows
+			Mainframe.setVideoSource(videoPath/* + userVideoName + extension*/);
+			Mainframe.changeVideo();
+		}
+	}
+
+	/**
+	 * Checks that a video/ audio name that user inputs contains and avi or mp4 extension
+	 *
+	 * Checks that a video/ audio name that user inputs contains a mp3 extension
+	 * If it does, this won't create a file that is double .mp3.mp3
+	 */
+	protected void nameWithExtensions(String s){
+		if (isVideo){
+			extension = ".mp4";
+			if (s.endsWith(".avi")){
+				extension = "";
+			} else if (s.endsWith(".mp4")){
+				extension = "";
+			}
+		} else {
+			extension = ".mp3";
+			if (s.endsWith(".mp3")){
+				extension = "";
+			}
+		}
+	}
+	
+	/**
+	 * Checks if video/ audio name contains a space/ tab character
+	 */
+	protected static boolean checkForSpaces(String s){
+		if (s == null| s.contains(" ") | s.contains("\t")){
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Launches an error message pop up to tell them of a specified string error
+	 */
+	public void errorMessage(String error){
+		JOptionPane.showMessageDialog(null, this, error, 0);
+	}
+	
+}
