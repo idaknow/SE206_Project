@@ -1,0 +1,26 @@
+package GUI;
+import javax.swing.SwingWorker;
+
+/**
+	 * Creates a rewind process
+	 */
+	public class RewindSwing extends SwingWorker<Void,Void>{
+		boolean rw;
+
+		public RewindSwing(){this.rw = Mainframe.getRwd();}
+
+		@Override
+		protected Void doInBackground() throws Exception {
+			//will do rewind process if rw = true, if the time won't go into negative, and if it isn't cancelled
+			while(rw && Mainframe.mp.getTime()- 8 >0 && !isCancelled()){
+				Mainframe.mp.skip(-8);
+			}
+			return null;  
+		}
+
+		// when process is finished sets rwd to false and plays the video
+		protected void done(){
+			Mainframe.setRwd(false);
+			Mainframe.mp.play();
+		}
+	}
