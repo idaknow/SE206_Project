@@ -1,0 +1,58 @@
+package GUI;
+import java.io.File;
+
+import javax.swing.filechooser.FileFilter;
+
+public class fileChoseFilter {
+	
+	private static FileFilter filter;
+	
+	public static FileFilter getFilterType(boolean isVideo){
+		if(isVideo){
+			videoFilter();
+		} else {
+			audioFilter();
+		}
+		return filter;
+	}
+	
+	/**
+	 * sets JChooser filter for videos, to directories + either .avi or .mp4 video files
+	 */
+	private static void videoFilter(){
+		filter = new FileFilter() {
+			public String getDescription() {
+				return "AVI(*.avi) or MP4(*.mp4) videos";
+			}
+			@Override
+			public boolean accept(File f) {
+				if (f.isDirectory()) {
+					return true;
+				} else {
+					String filename = f.getName().toLowerCase();
+					return filename.endsWith(".avi") || filename.endsWith(".mp4") ;
+				}
+			}
+		};
+	}
+
+	/**
+	 * sets JChooser filter for audios to directories + .mp3 audio files
+	 */
+	private static void audioFilter(){
+		filter = new FileFilter() {
+			public String getDescription() {
+				return "MP3 audio (*.mp3)";
+			}
+			@Override
+			public boolean accept(File f) {
+				if (f.isDirectory()) {
+					return true;
+				} else {
+					String filename = f.getName().toLowerCase();
+					return filename.endsWith(".mp3");
+				}
+			}
+		};
+	}
+}
