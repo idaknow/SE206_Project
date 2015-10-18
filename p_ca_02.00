@@ -1,0 +1,160 @@
+package GUI;
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.JTextArea;
+import javax.swing.JButton;
+import java.awt.Color;
+import javax.swing.JLabel;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.IOException;
+
+//BY IDA DE SMET
+//MediaSelection, CommentaryAdd and Mainframe classes required
+public class CommentaryAdd extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
+	 * declared variables required
+	 */
+	private JPanel contentPane;
+	protected static CommentaryAdd frame;
+	private JTextArea txtrA;
+	private String commentary;
+	private String extension;
+	private String userMp3Name = null;
+	private boolean acceptableName = false;
+
+	/**
+	 * Launches the Adding commentary frame
+	 */
+	public static void start() {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					frame = new CommentaryAdd();
+					frame.setVisible(true);
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	/**
+	 * This constructor adds all the buttons, with actionlisteners to the main frame panel.
+	 */
+	public CommentaryAdd() {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 450, 300);
+		//__________________________________________________________________________ MAIN PANEL
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+
+		//__________________________________________________________________________ COMMENTARY TO ADD
+		txtrA = new JTextArea();
+		txtrA.setBackground(Color.CYAN);
+		txtrA.setLineWrap(true);
+		txtrA.setText("Add Commentary here");
+		txtrA.setBounds(25, 37, 392, 137);
+		contentPane.add(txtrA);
+
+		//__________________________________________________________________________ PREVIEW BUTTON
+		JButton btnPreview = new JButton("Preview");
+		btnPreview.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (txtLengthCheck(txtrA.getText())){
+					festivalPreview();
+				}
+			}
+		});
+		btnPreview.setBounds(25, 235, 117, 25);
+		contentPane.add(btnPreview);
+
+		//__________________________________________________________________________ SAVE TO MP3 BUTTON
+		JButton saveToMp3Btn = new JButton("save to mp3");
+		saveToMp3Btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (txtLengthCheck(txtrA.getText())){ // checks length of text < 100 characters
+
+					userMp3Name = nameFilePopup(); // prompts user for the new mp3 file name
+					
+					if (userMp3Name != null){ // checks cancel hasn't been pressed
+						Merge m = new Merge(userMp3Name, false, txtrA.getText());
+						m.start();
+					}
+				}
+			}
+		});
+		saveToMp3Btn.setBounds(148, 235, 139, 25);
+		contentPane.add(saveToMp3Btn);
+
+		//__________________________________________________________________________ CANCEL BUTTON
+		JButton cancelBtn = new JButton("Back");
+		cancelBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frame.setVisible(false); // close current frame
+			}
+		});
+		cancelBtn.setBounds(311, 235, 117, 25);
+		contentPane.add(cancelBtn);
+
+		//__________________________________________________________________________ MAX WORDS LABEL
+		JLabel lblMaxWords = new JLabel("Max. 100 characters");
+		lblMaxWords.setBounds(295, 186, 133, 15);
+		contentPane.add(lblMaxWords);
+	}
+
+	/**
+	 * Checks the length of the input is less 101 characters
+	 * This means the text won't be too long that festival will start to struggle to keep up
+	 * we chose characters because while festival can't handle a lot of words, it also can't be assumed to be able to say x amount of really long words
+	 */
+	private boolean txtLengthCheck(String txt){
+		if (txt.length() <= 100){
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Calls festival, to preview the users input commentary
+	 */
+	private void festivalPreview(){
+		commentary = "echo \" " + txtrA.getText() + "\" | festival --tts";
+		ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c" , commentary);
+		try {
+			@SuppressWarnings("unused")
+			Process process = pb.start();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * This creates a pop up asking for the new mp3 file name input
+	 */
+	private String nameFilePopup() {
+		String info = JOptionPane.showInputDialog(this, "Save new MP3 File as:");
+		return info;
+	}
+
+	/**
+	 * Creates a popup for displaying a certain string error, if the file name already exists or contains spaces
+	 */
+	private void errorMessage(String error){
+		JOptionPane.showMessageDialog(this, "TRY AGAIN: "+error);
+	}
+
+}
