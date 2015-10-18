@@ -1,0 +1,27 @@
+package GUI;
+import javax.swing.SwingUtilities;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
+import uk.co.caprica.vlcj.binding.LibVlc;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
+
+/**
+ * Launches application
+ * @author idaknow
+ *
+ */
+public class main {
+	public static void main(final String[] args) {
+		NativeLibrary.addSearchPath(
+				RuntimeUtil.getLibVlcLibraryName(), "/Applications/vlc-2.0.0/VLC.app/Contents/MacOS/lib"
+				);
+		Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
+
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				new Mainframe(null);
+			}
+		});
+	}
+}
