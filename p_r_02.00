@@ -1,0 +1,31 @@
+package GUI;
+public class Rewind{
+
+	private static RewindSwing r = null;
+
+	public static void checkStatus(){
+		
+		if (Mainframe.getRwd()){ // checks if clicked rwd button when video is playing/ paused
+			r = new RewindSwing(); // creates a rewind process
+			r.execute(); // starts process, continued till cancelled or done
+			Mainframe.setRwd(false);
+		} else { // stopping rewind
+			if (r != null){ // checks that there is a rewind process happeneing
+				r.cancel(true); // cancels existing rewind process
+			}
+			r = null; // sets rewind process to non-existant
+			Mainframe.setRwd(false); // so next time rwd clicks will be true
+		}
+	}
+	
+	public static void checkPlay(){
+		if (Rewind.r!=null){ // checks rewind process is happening, if it is cancels it (like in rewind button)
+			Rewind.r.cancel(true);
+			Rewind.r = null;
+			Mainframe.setRwd(true);
+		} else {
+			Mainframe.mp.play();
+		}
+		Mainframe.setFastForward(false);
+	}
+}
