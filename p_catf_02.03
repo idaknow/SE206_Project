@@ -10,6 +10,10 @@ import javax.swing.border.EmptyBorder;
 
 public class ChooseAudioTypeFrame extends JFrame{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	protected JFrame psmp3;
 	protected JPanel pscontentPane;
 
