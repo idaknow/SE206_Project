@@ -4,17 +4,16 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
+import functionality.*;
 import javax.swing.JTextArea;
 import javax.swing.JButton;
 import java.awt.Color;
 import javax.swing.JLabel;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.IOException;
 
 //BY IDA DE SMET
-//MediaSelection, CommentaryAdd and Mainframe classes required
 public class CommentaryAdd extends JFrame {
 
 	/**
@@ -26,11 +25,8 @@ public class CommentaryAdd extends JFrame {
 	 */
 	private JPanel contentPane;
 	protected static CommentaryAdd frame;
-	private JTextArea txtrA;
-	private String commentary;
-	private String extension;
+	private JTextArea commentary;
 	private String userMp3Name = null;
-	private boolean acceptableName = false;
 
 	/**
 	 * Launches the Adding commentary frame
@@ -62,20 +58,21 @@ public class CommentaryAdd extends JFrame {
 		contentPane.setLayout(null);
 
 		//__________________________________________________________________________ COMMENTARY TO ADD
-		txtrA = new JTextArea();
-		txtrA.setBackground(Color.CYAN);
-		txtrA.setLineWrap(true);
-		txtrA.setText("Add Commentary here");
-		txtrA.setBounds(25, 37, 392, 137);
-		contentPane.add(txtrA);
+		commentary = new JTextArea();
+		commentary.setBackground(Color.CYAN);
+		commentary.setLineWrap(true);
+		commentary.setText("Add Commentary here");
+		commentary.setBounds(25, 37, 392, 137);
+		contentPane.add(commentary);
 
 		//__________________________________________________________________________ PREVIEW BUTTON
 		JButton btnPreview = new JButton("Preview");
 		btnPreview.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (txtLengthCheck(txtrA.getText())){
-					festivalPreview();
+				if (txtLengthCheck(commentary.getText())){
+					Festival f = new Festival(commentary.getText());
+					f.preview();
 				}
 			}
 		});
@@ -86,12 +83,12 @@ public class CommentaryAdd extends JFrame {
 		JButton saveToMp3Btn = new JButton("save to mp3");
 		saveToMp3Btn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (txtLengthCheck(txtrA.getText())){ // checks length of text < 100 characters
+				if (txtLengthCheck(commentary.getText())){ // checks length of text < 100 characters
 
 					userMp3Name = nameFilePopup(); // prompts user for the new mp3 file name
 					
 					if (userMp3Name != null){ // checks cancel hasn't been pressed
-						Merge m = new Merge(userMp3Name, false, txtrA.getText());
+						functionality.Merge m = new functionality.Merge(userMp3Name, false, commentary.getText());
 						m.start();
 					}
 				}
@@ -125,21 +122,8 @@ public class CommentaryAdd extends JFrame {
 		if (txt.length() <= 100){
 			return true;
 		}
+		errorMessage("Max 100 Characters total");
 		return false;
-	}
-
-	/**
-	 * Calls festival, to preview the users input commentary
-	 */
-	private void festivalPreview(){
-		commentary = "echo \" " + txtrA.getText() + "\" | festival --tts";
-		ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c" , commentary);
-		try {
-			@SuppressWarnings("unused")
-			Process process = pb.start();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
 	}
 
 	/**
