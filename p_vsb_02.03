@@ -1,9 +1,7 @@
-package GUI;
-import java.util.List;
-
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+package functionality;
 import javax.swing.SwingWorker;
+
+import GUI.Mainframe;
 
 public class videoSliderBar extends SwingWorker<Void, Integer> {
 
@@ -19,10 +17,10 @@ public class videoSliderBar extends SwingWorker<Void, Integer> {
 
 	@Override
 	protected Void doInBackground() throws Exception {
-		while(run && !isCancelled() && Mainframe.mp != null){
-			currentsliderValue = Mainframe.mp.getTime()* 100 / totaltime;
+		while(run && !isCancelled() && Mainframe.getMp() != null){
+			currentsliderValue = Mainframe.getMp().getTime()* 100 / totaltime;
 			//System.out.println(currentsliderValue);
-			Mainframe.videoSlider.setValue((int)currentsliderValue);
+			//GUI.Mainframe.videoSlider.setValue((int)currentsliderValue);
 		}
 		return null;
 	}
