@@ -1,0 +1,26 @@
+package functionality;
+
+import java.io.IOException;
+
+public class Festival{
+	
+	private String text;
+	
+	public Festival(String text){
+		this.text = text;
+	}
+	
+	/**
+	 * Calls festival, to preview the users input commentary
+	 */
+	public void preview(){
+		String commentary = "echo \" " + text + "\" | festival --tts";
+		ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c" , commentary);
+		try {
+			pb.start();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+}
