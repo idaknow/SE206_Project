@@ -1,10 +1,12 @@
 package GUI;
+
 import java.awt.Canvas;
 import java.awt.CardLayout;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 
 import java.awt.BorderLayout;
 
@@ -20,10 +22,15 @@ import java.awt.event.ActionEvent;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JSlider;
+import javax.swing.JTable;
+
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
 import functionality.*;
 
@@ -66,41 +73,43 @@ public class Mainframe extends JFrame {
 	private JScrollPane scrollPane;
 	private JButton btnAddSelectedAudio;
 	private JButton btnSeeAllAudio;
+	private JButton btnPrevAllAudio;
 	private JPanel audioListPanel;
 	private static JList audioListChoose;
-	private static JList audioListCurrentAdded;
+	private static JTable audioListCurrentAdded;
 	private static DefaultListModel<String> model_1;
-	private static DefaultListModel<String> model_2;
+	private static DefaultListModel<String[]> model_2;
 	private JButton btnRemove;
 	private JLabel lblSelectedAudio;
 	private JButton openEditedAudio;
-	//private JSlider videoSlider;
+	// private JSlider videoSlider;
 	private JPanel playBtnPanel;
 	private JPanel sliderPanel;
+	private CardLayout currentCard;
 
 	/**
 	 * Initialize the contents of the frame.
 	 */
 	public Mainframe() {
 
-		//Creates the main JFrame
+		// Creates the main JFrame
 		JFrame frame = new JFrame("mainAp");
 		frame.setTitle("VIDIVOX : BY IDA");
-		frame.setLocation(100,100);
-		frame.setSize(1200,600);
+		frame.setLocation(100, 100);
+		frame.setSize(1200, 600);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 
-		//creates main media player factory with canvas
+		// creates main media player factory with canvas
 		MediaPlayerFactory mpf = new MediaPlayerFactory();
 		Canvas c = new Canvas();
 		c.setBackground(Color.black);
-		c.setBounds(100,300,800,300);
-		//creates panel that you put the video(canvas & factory) on
+		c.setBounds(100, 300, 800, 300);
+		// creates panel that you put the video(canvas & factory) on
 		JPanel mediaPanel = new JPanel();
 		mediaPanel.setLayout(new BorderLayout());
-		mediaPanel.add(c,BorderLayout.WEST);
-		mediaPanel.setBounds(100,300,800,300);
+		mediaPanel.add(c, BorderLayout.WEST);
+		mediaPanel.setBounds(100, 300, 800, 300);
 		frame.getContentPane().add(mediaPanel, BorderLayout.CENTER);
 
 		rightEditPanel = new JPanel();
@@ -122,15 +131,16 @@ public class Mainframe extends JFrame {
 		btnNewButton.setFont(new Font("Tahoma", Font.BOLD, 16));
 		btnNewButton.addActionListener(new ActionListener() {
 			MediaSelection ms = new MediaSelection(false);
+
 			public void actionPerformed(ActionEvent e) {
-				if (getMp().isPlaying()){
+				if (getMp().isPlaying()) {
 					getMp().pause();
 				}
-				if (Mainframe.getVideoSource() == null){
+				if (Mainframe.getVideoSource() == null) {
 					new ChooseAudioTypeFrame();
-				} else if (!ms.isMSOpen){
+				} else if (!ms.isMSOpen) {
 					ms.start(false);
-				} else if (ms.isMSOpen){
+				} else if (ms.isMSOpen) {
 					ms.BringToFront();
 				}
 			}
@@ -144,10 +154,26 @@ public class Mainframe extends JFrame {
 		btnAddSelectedAudio = new JButton("Add audio");
 		btnAddSelectedAudio.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				btnAddSelectedAudio.setText("Add audio");
-				openEditedAudio.setText("Display edits");
-				CardLayout c = (CardLayout) audioListPanel.getLayout();
-				c.show(audioListPanel,"audio files to select from");
+				// select a
+				if (btnAddSelectedAudio.getText() == "Add audio") {
+					// pop up
+					if (mp.isPlaying()) {
+						mp.pause();
+					}
+					int time = (int) mp.getTime();
+					if (JOptionPane.showConfirmDialog(audioListPanel,
+							"Do you want to add audio file '" + "name" + "' to this video at current movie time ("
+									+ time + ")",
+							"Add Audio to video", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+						addToTable((int) mp.getTime(), 0, lblSelectedAudio.getText());
+						// change panel
+						//
+					} else {
+						//
+					}
+				} else {
+
+				}
 			}
 		});
 		bottomAudioBtns.add(btnAddSelectedAudio, BorderLayout.CENTER);
@@ -155,11 +181,23 @@ public class Mainframe extends JFrame {
 		btnRemove = new JButton("Remove audio");
 		btnRemove.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// if certain layout
 				String selectedAudio = lblSelectedAudio.getText();
-				int i = model_1.indexOf(lblSelectedAudio.getText());
-				if (i>= 0){
-					model_1.removeElementAt(i);
+				if (openEditedAudio.getText() == "Display edits") {
+					int i = model_1.indexOf(selectedAudio);
+					if (i >= 0) {
+						model_1.removeElementAt(i);
+					}
+				} else {
+					DefaultTableModel dtm = (DefaultTableModel) audioListCurrentAdded.getModel();
+					for (int i = 0; i < dtm.getRowCount(); i++) {
+						if (selectedAudio == dtm.getValueAt(i, 2)) {
+							dtm.removeRow(i);
+							i = dtm.getRowCount();
+						}
+					}
 				}
+				// if other table
 			}
 		});
 		bottomAudioBtns.add(btnRemove, BorderLayout.WEST);
@@ -168,16 +206,20 @@ public class Mainframe extends JFrame {
 		bottomAudioBtns.add(lblSelectedAudio, BorderLayout.NORTH);
 
 		openEditedAudio = new JButton("Display edits");
-		openEditedAudio.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e1){
+		openEditedAudio.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e1) {
+				// needed to add a change here ahhh I can't remember
+				//selected audio lbl change
+				lblSelectedAudio.setText("Select an audio, the name will display here");
 				CardLayout c = (CardLayout) audioListPanel.getLayout();
-				if (openEditedAudio.getText().equals("Display edits")){
-					c.show(audioListPanel,"current added audio");
+				if (openEditedAudio.getText().equals("Display edits")) {
+					c.show(audioListPanel, "current added audio");
 					openEditedAudio.setText("Back");
-					btnAddSelectedAudio.setText("Edit commentary");
+					btnAddSelectedAudio.setText("Preview sound");
 				} else {
-					c.show(audioListPanel,"audio files to select from");
+					c.show(audioListPanel, "audioList");
 					openEditedAudio.setText("Display edits");
+					btnAddSelectedAudio.setText("Add audio");
 				}
 			}
 		});
@@ -193,48 +235,69 @@ public class Mainframe extends JFrame {
 		audioListChoose = new JList();
 		model_1 = new DefaultListModel();
 		audioListChoose.setModel(model_1);
-		audioListPanel.add(audioListChoose, "audio files to select from");
-		audioListChoose.addMouseListener(new MouseAdapter(){
+		audioListPanel.add(audioListChoose, "audioList");
+		audioListChoose.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mouseClicked(MouseEvent arg0){
-				if (!model_1.isEmpty()){
+			public void mouseClicked(MouseEvent arg0) {
+				if (!model_1.isEmpty()) {
 					JList jl = (JList) arg0.getSource();
 					int i = jl.locationToIndex(arg0.getPoint());
-					if (i>=0){
+					if (i >= 0) {
 						Object o = jl.getModel().getElementAt(i);
 						lblSelectedAudio.setText(o.toString());
 					}
 				}
 			}
-
 		});
 
-		audioListCurrentAdded = new JList();
-		model_2 = new DefaultListModel();
-		model_2.addElement("test2");
-		audioListCurrentAdded.setModel(model_2);
-		audioListPanel.add(audioListCurrentAdded, "current added audio");
+		JScrollPane scrollPane_1 = new JScrollPane();
 
-		//PANEL FOR ALL SOUTH BUTTONS (PLAY, PAUSE, RW, FFD, MUTE, VOL SLIDER)
+		audioListCurrentAdded = new JTable();
+
+		audioListCurrentAdded.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		audioListCurrentAdded.setFillsViewportHeight(true);
+		audioListCurrentAdded.setModel(new DefaultTableModel(new String[] { "Time", "Total Time", "Name" }, 0));
+		scrollPane_1.setViewportView(audioListCurrentAdded);
+
+		audioListCurrentAdded.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg1) {
+				JTable jl = (JTable) arg1.getSource();
+				int i = jl.rowAtPoint(arg1.getPoint());
+				if (i >= 0) {
+					if (jl.getValueAt(i, 2) != null) {
+						String value = jl.getValueAt(i, 2).toString();
+						if (value != null) {
+							lblSelectedAudio.setText(value);
+						}
+					}
+				}
+			}
+
+		});
+		audioListPanel.add(audioListCurrentAdded, "current added audio");
+		audioListPanel.add(scrollPane_1);
+
+		// PANEL FOR ALL SOUTH BUTTONS (PLAY, PAUSE, RW, FFD, MUTE, VOL SLIDER)
 		JPanel bottomBtnPanel = new JPanel();
-		bottomBtnPanel.setBounds(100,900,105,200);
+		bottomBtnPanel.setBounds(100, 900, 105, 200);
 		frame.getContentPane().add(bottomBtnPanel, BorderLayout.SOUTH);
 		bottomBtnPanel.setBackground(Color.black);
-		//PANEL FOR ADDED AUDIO AND VIDEO AT NORTH
+		// PANEL FOR ADDED AUDIO AND VIDEO AT NORTH
 		JPanel topMediaBtnPanel = new JPanel();
-		topMediaBtnPanel.setBounds(200,1900,105,200);
+		topMediaBtnPanel.setBounds(200, 1900, 105, 200);
 		frame.getContentPane().add(topMediaBtnPanel, BorderLayout.NORTH);
 		topMediaBtnPanel.setBackground(Color.black);
 		bottomBtnPanel.setLayout(new BorderLayout(0, 0));
 
-
-		//__________________________________________________________________________ VIDEO SLIDER INITIALIZED
+		// __________________________________________________________________________
+		// VIDEO SLIDER INITIALIZED
 		videoSlider = new JSlider();
-		//System.out.println(videoSlider.getValue());
+		// System.out.println(videoSlider.getValue());
 
 		videoSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				if (mp != null){
+				if (mp != null) {
 
 				}
 			}
@@ -246,7 +309,8 @@ public class Mainframe extends JFrame {
 		bottomBtnPanel.add(playBtnPanel, BorderLayout.WEST);
 		playBtnPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-		//__________________________________________________________________________ REWIND BUTTON
+		// __________________________________________________________________________
+		// REWIND BUTTON
 		rwdbutton = new JButton();
 		rwdbutton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -256,20 +320,24 @@ public class Mainframe extends JFrame {
 		rwdbutton.setIcon(rwd_Icon);
 		playBtnPanel.add(rwdbutton);
 
-		//__________________________________________________________________________ PLAY BUTTON
+		// __________________________________________________________________________
+		// PLAY BUTTON
 		playbutton = new JButton();
 		playbutton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//boolean once chosen a new video we have a boolean so that it 
-				if (!getMp().isPlaying()){
-					if (getMp() != null){ // checks video exists and mp is initialized correctly
-						getMp().setRate((float) 1); // set normal rate (incase ffwding)
+				// boolean once chosen a new video we have a boolean so that it
+				if (!getMp().isPlaying()) {
+					if (getMp() != null) { // checks video exists and mp is
+											// initialized correctly
+						getMp().setRate((float) 1); // set normal rate (incase
+													// ffwding)
 						Rewind.checkPlay();
 					}
 				} else { // if the video is playing
-					if (getMp() != null){
+					if (getMp() != null) {
 						getMp().start();
-						getMp().setRate((float) 1); // set normal rate (incase ffwding)
+						getMp().setRate((float) 1); // set normal rate (incase
+													// ffwding)
 						Rewind.checkPlay();
 					}
 				}
@@ -278,7 +346,8 @@ public class Mainframe extends JFrame {
 		playbutton.setIcon(play_Icon);
 		playBtnPanel.add(playbutton);
 
-		//__________________________________________________________________________ PAUSE BUTTON
+		// __________________________________________________________________________
+		// PAUSE BUTTON
 		pausebutton = new JButton();
 		pausebutton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -288,15 +357,16 @@ public class Mainframe extends JFrame {
 		pausebutton.setIcon(pause_Icon);
 		playBtnPanel.add(pausebutton);
 
-		//__________________________________________________________________________ FAST FORWARD BUTTON
+		// __________________________________________________________________________
+		// FAST FORWARD BUTTON
 		ffdbutton = new JButton();
-		ffdbutton.addActionListener(new ActionListener() { 
+		ffdbutton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (ffd){
+				if (ffd) {
 					ffd = false;
 					getMp().setRate((float) 1);
-				}else {
+				} else {
 					ffd = true;
 					getMp().setRate((float) 10);
 				}
@@ -305,12 +375,14 @@ public class Mainframe extends JFrame {
 		ffdbutton.setIcon(ffd_Icon);
 		playBtnPanel.add(ffdbutton);
 
-		//__________________________________________________________________________ MUTE BUTTON
+		// __________________________________________________________________________
+		// MUTE BUTTON
 		mutebutton = new JButton();
 		mutebutton.addActionListener(new ActionListener() {
 			int sliderValue = 50;
+
 			public void actionPerformed(ActionEvent e) {
-				if (getMp().isMute()){
+				if (getMp().isMute()) {
 					mutebutton.setIcon(mute_Icon);
 					volSlider.setValue(sliderValue);
 				} else {
@@ -324,7 +396,8 @@ public class Mainframe extends JFrame {
 		mutebutton.setIcon(mute_Icon);
 		playBtnPanel.add(mutebutton);
 
-		//__________________________________________________________________________ VOLUME SLIDER
+		// __________________________________________________________________________
+		// VOLUME SLIDER
 		volSlider = new JSlider();
 		volSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
@@ -334,20 +407,25 @@ public class Mainframe extends JFrame {
 		});
 		playBtnPanel.add(volSlider);
 
-		//creates media player where video is played on
+		// creates media player where video is played on
 		setMp(mpf.newEmbeddedMediaPlayer());
 		getMp().setVideoSurface(mpf.newVideoSurface(c));
-		//mp.playMedia("big_buck_bunny_1_minute.avi"); // this is used so when testing we don't have to rechoose the video every time
-
+		// mp.playMedia("big_buck_bunny_1_minute.avi"); // this is used so when
+		// testing we don't have to rechoose the video every time
 
 		btnSeeAllAudio = new JButton("Save new video");
 		bottomBtnPanel.add(btnSeeAllAudio, BorderLayout.EAST);
 		btnSeeAllAudio.setFont(new Font("Tahoma", Font.BOLD, 16));
 
-		sliderPanel = new JPanel();
-		bottomBtnPanel.add(sliderPanel, BorderLayout.CENTER);
+		btnPrevAllAudio = new JButton("Preview all");
+		bottomBtnPanel.add(btnPrevAllAudio, BorderLayout.CENTER);
+		btnPrevAllAudio.setFont(new Font("Tahoma", Font.BOLD, 16));
 
-		//__________________________________________________________________________ VIDEO SELECT TO PLAY BUTTON
+		// sliderPanel = new JPanel();
+		// bottomBtnPanel.add(sliderPanel, BorderLayout.CENTER);
+
+		// __________________________________________________________________________
+		// VIDEO SELECT TO PLAY BUTTON
 		videoSelectbtn = new JButton("ADD VIDEO");
 		videoSelectbtn.setFont(new Font("Tahoma", Font.BOLD, 18));
 		videoSelectbtn.addActionListener(new ActionListener() {
@@ -367,25 +445,29 @@ public class Mainframe extends JFrame {
 			}
 		});
 		mp3Selectbtn.setBounds(503, 12, 500, 25);
-		topMediaBtnPanel.add(mp3Selectbtn);		
+		topMediaBtnPanel.add(mp3Selectbtn);
 	}
 
 	/**
 	 * Set's video as the input String s from other classes
 	 */
-	public static void setVideoSource(String string){ video = string; }
+	public static void setVideoSource(String string) {
+		video = string;
+	}
 
 	/**
 	 * Set's audio as the input String s from other classes
 	 */
-	public static void setAudioSource(String s){ audio = s; }
+	public static void setAudioSource(String s) {
+		audio = s;
+	}
 
 	/**
 	 * Changes the current video media being played
 	 */
-	public static void changeVideo(){ 
+	public static void changeVideo() {
 		getMp().playMedia(video);
-		lblVideo.setText("VIDEO : "+video);
+		lblVideo.setText("VIDEO : " + video);
 		videoSlider.setMaximum((int) getMp().getLength());
 		videoSlider.setValue(0);
 	}
@@ -393,18 +475,28 @@ public class Mainframe extends JFrame {
 	/**
 	 * returns the current video
 	 */
-	public static String getVideoSource(){ return video; }
+	public static String getVideoSource() {
+		return video;
+	}
 
 	/**
 	 * returns the current audio
 	 */
-	public static String getAudioSource(){ return audio; }
+	public static String getAudioSource() {
+		return audio;
+	}
 
-	public static boolean getRwd(){ return rwd; }
+	public static boolean getRwd() {
+		return rwd;
+	}
 
-	public static void setRwd(boolean rw){ rwd = rw; }
+	public static void setRwd(boolean rw) {
+		rwd = rw;
+	}
 
-	public static void setFastForward(boolean fwd){ ffd = fwd; }
+	public static void setFastForward(boolean fwd) {
+		ffd = fwd;
+	}
 
 	public static EmbeddedMediaPlayer getMp() {
 		return mp;
@@ -414,16 +506,20 @@ public class Mainframe extends JFrame {
 		Mainframe.mp = mp;
 	}
 
-	public static void addToList(boolean addedToVideo, String audioName){
-		if (addedToVideo){
-			if (!model_2.contains(audioName)){
-				model_2.addElement(audioName);
-			}
-		} else {
-			if (!model_1.contains(audioName)){
-				model_1.addElement(audioName);
-			}
+	public static void addToList1(String audioName) {
+		if (!model_1.contains(audioName)) {
+			model_1.addElement(audioName);
+		}
+	}
 
+	public static void addToTable(int timeEntered, int totalLength, String name) {
+		// check not invalid time
+		if (timeEntered + totalLength < mp.getLength()) {
+			Object[] newRow = { Integer.toString(timeEntered), Integer.toString(totalLength), name };
+			DefaultTableModel model = (DefaultTableModel) audioListCurrentAdded.getModel();
+			model.addRow(newRow);
+		} else {
+			// error message
 		}
 	}
 
