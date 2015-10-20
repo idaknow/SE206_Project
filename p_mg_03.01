@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.swing.JOptionPane;
 
+import GUI.CommentaryAdd;
 import GUI.Mainframe;
 
 /**
@@ -18,16 +19,20 @@ public class Merge {
 	private boolean acceptableName;
 	private boolean isVideo;
 	private String text;
+	private boolean isEdit;
 
-	public Merge(String name, boolean isVideo, String text){
+	public Merge(String name, boolean isVideo, String text, boolean isEdit){
 		acceptableName = true;
 		this.name = name;
 		this.isVideo = isVideo;
 		this.text = text;
+		this.isEdit = isEdit;
 	}
 
 	public void start(){
+
 		nameWithExtensions(name);// checks if the new mp3 name has extension .mp3
+
 		nameCheck();
 		if (acceptableName){// if the name isn't null or already exists
 			if (isVideo){
@@ -36,10 +41,12 @@ public class Merge {
 				commentaryMerge();
 			}
 		}
+
 	}
 
 	protected void commentaryMerge(){
 		String commentary = "echo "+ "\"" + text + "\"";
+		//check how name file
 		ProcessBuilder pb1 = new ProcessBuilder("/bin/bash","-c", commentary + " > ."+name+".txt");// creates/ overwrites a temp hidden file with commentary in
 		//creates mp3 file using commentary file (above)
 		ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c","text2wave ."+name+".txt -o " + name + extension);
@@ -91,13 +98,18 @@ public class Merge {
 			errorMessage("Filename can't contain spaces");
 			acceptableName = false;
 		} else if (f.exists()) { // check file name doesn't already exist
-			errorMessage("This filename already exists");
-			acceptableName = false;
+			if (CommentaryAdd.isEdit){
+				f.delete();
+				acceptableName = true;
+			} else {
+				errorMessage("This filename already exists");
+				acceptableName = false;
+			}
 		} else { // name doesn't exist and passed checkForSpaces
 			acceptableName = true;
 		}
 	}
-	
+
 	/**
 	 * Checks that a video/ audio name that user inputs contains and avi or mp4 extension
 	 *
@@ -114,8 +126,13 @@ public class Merge {
 			}
 		} else {
 			extension = ".mp3";
-			if (s.endsWith(".mp3")){
-				extension = "";
+			if (!isEdit){
+				if (s.endsWith(".mp3")){
+					extension = "";
+				}
+			} else {
+				int i = name.indexOf(".mp3");
+				name = name.substring(0,i);
 			}
 		}
 	}
