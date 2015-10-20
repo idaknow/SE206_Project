@@ -11,6 +11,11 @@ import javax.swing.JButton;
 import java.awt.Color;
 import javax.swing.JLabel;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.awt.event.ActionEvent;
 
 //BY IDA DE SMET
@@ -27,15 +32,16 @@ public class CommentaryAdd extends JFrame {
 	protected static CommentaryAdd frame;
 	private JTextArea commentary;
 	private String userMp3Name = null;
+	public static boolean isEdit;
 
 	/**
 	 * Launches the Adding commentary frame
 	 */
-	public static void start() {
+	public static void start(final boolean isEdit) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					frame = new CommentaryAdd();
+					frame = new CommentaryAdd(isEdit);
 					frame.setVisible(true);
 					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				} catch (Exception e) {
@@ -48,7 +54,8 @@ public class CommentaryAdd extends JFrame {
 	/**
 	 * This constructor adds all the buttons, with actionlisteners to the main frame panel.
 	 */
-	public CommentaryAdd() {
+	public CommentaryAdd(final boolean isEdit) {
+		this.isEdit = isEdit;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		//__________________________________________________________________________ MAIN PANEL
@@ -61,7 +68,27 @@ public class CommentaryAdd extends JFrame {
 		commentary = new JTextArea();
 		commentary.setBackground(Color.CYAN);
 		commentary.setLineWrap(true);
-		commentary.setText("Add Commentary here");
+		if (!isEdit){
+			commentary.setText("Add Commentary here");
+		} else {
+			userMp3Name = Mainframe.getAudioSource();
+			File f1 = new File (userMp3Name);
+			String name = f1.getName();
+			int i = name.indexOf(".mp3");
+			name = name.substring(0,i);
+			String fileText = "." + name + ".txt";
+			File f = new File(fileText);
+			String line;
+			String totalLine;
+			try {
+				BufferedReader in = new BufferedReader(new FileReader(f));
+				while ((line = in.readLine()) != null){ //only works for one line
+					commentary.setText(line);
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
 		commentary.setBounds(25, 37, 392, 137);
 		contentPane.add(commentary);
 
@@ -84,9 +111,20 @@ public class CommentaryAdd extends JFrame {
 		saveToMp3Btn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (txtLengthCheck(commentary.getText())){ // checks length of text < 100 characters
+					if (!isEdit){
+						userMp3Name = nameFilePopup(); // prompts user for the new mp3 file name
+					} else {
+						userMp3Name = Mainframe.getAudioSource();
+						
 
-					userMp3Name = nameFilePopup(); // prompts user for the new mp3 file name
-					
+						/*ProcessBuilder pb = new ProcessBuilder("/bin/bash", "cat " + fileText);
+
+						try {
+							pb.start();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}*/
+					}
 					if (userMp3Name != null){ // checks cancel hasn't been pressed
 						functionality.Merge m = new functionality.Merge(userMp3Name, false, commentary.getText());
 						m.start();
@@ -140,5 +178,6 @@ public class CommentaryAdd extends JFrame {
 	private void errorMessage(String error){
 		JOptionPane.showMessageDialog(this, "TRY AGAIN: "+error);
 	}
+
 
 }
