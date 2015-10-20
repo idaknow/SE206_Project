@@ -20,6 +20,7 @@ public class SubmitMergeMp3Frame {
 	protected JFrame psmp3;
 	protected JPanel pscontentPane;
 	protected JLabel lblA;
+	protected boolean isEdit;
 
 	/**
 	 * This constructor creates a pop up frame that checks the user wants to submit the audio file to the video
@@ -58,7 +59,7 @@ public class SubmitMergeMp3Frame {
 					String userVideoName = nameFilePopup();//get file name to save video as
 
 					if (userVideoName != null){
-						Merge m = new Merge(userVideoName, true, null);
+						Merge m = new Merge(userVideoName, true, null, isEdit);
 						m.start();
 						psmp3.setVisible(false);
 					}
