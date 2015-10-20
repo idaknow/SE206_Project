@@ -115,18 +115,9 @@ public class CommentaryAdd extends JFrame {
 						userMp3Name = nameFilePopup(); // prompts user for the new mp3 file name
 					} else {
 						userMp3Name = Mainframe.getAudioSource();
-						
-
-						/*ProcessBuilder pb = new ProcessBuilder("/bin/bash", "cat " + fileText);
-
-						try {
-							pb.start();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}*/
 					}
 					if (userMp3Name != null){ // checks cancel hasn't been pressed
-						functionality.Merge m = new functionality.Merge(userMp3Name, false, commentary.getText());
+						functionality.Merge m = new functionality.Merge(userMp3Name, false, commentary.getText(), isEdit);
 						m.start();
 					}
 				}
