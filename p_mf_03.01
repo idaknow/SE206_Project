@@ -17,8 +17,15 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.awt.event.ActionEvent;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JSlider;
@@ -40,9 +47,13 @@ import java.awt.GridLayout;
 import java.awt.List;
 
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 
 import java.awt.Font;
 import java.awt.FlowLayout;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Mainframe extends JFrame {
 
@@ -85,12 +96,15 @@ public class Mainframe extends JFrame {
 	// private JSlider videoSlider;
 	private JPanel playBtnPanel;
 	private JPanel sliderPanel;
+	private boolean mousePressedPlaying;
 	private CardLayout currentCard;
+	private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
 	/**
 	 * Initialize the contents of the frame.
 	 */
 	public Mainframe() {
+
 
 		// Creates the main JFrame
 		JFrame frame = new JFrame("mainAp");
@@ -160,12 +174,19 @@ public class Mainframe extends JFrame {
 					if (mp.isPlaying()) {
 						mp.pause();
 					}
-					int time = (int) mp.getTime();
+					String time = updateTime(mp.getTime());
 					if (JOptionPane.showConfirmDialog(audioListPanel,
 							"Do you want to add audio file '" + "name" + "' to this video at current movie time ("
 									+ time + ")",
-							"Add Audio to video", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-						addToTable((int) mp.getTime(), 0, lblSelectedAudio.getText());
+									"Add Audio to video", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+						
+						float audioLength = 0;
+						try {
+							audioLength = audioLength(lblSelectedAudio.getText());
+						} catch (UnsupportedAudioFileException | IOException e1) {
+							e1.printStackTrace();
+						}
+						addToTable(updateTime(mp.getTime()), (int) audioLength, lblSelectedAudio.getText());
 						// change panel
 						//
 					} else {
@@ -295,15 +316,31 @@ public class Mainframe extends JFrame {
 		videoSlider = new JSlider();
 		// System.out.println(videoSlider.getValue());
 
-		videoSlider.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				if (mp != null) {
-
+		videoSlider.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if(mp.isPlaying()) {
+					mousePressedPlaying = true;
+					mp.pause();
 				}
+				else {
+					mousePressedPlaying = false;
+				}
+				setSliderBasedPosition();
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				setSliderBasedPosition();
+				updateUIState();
 			}
 		});
+		videoSlider.setToolTipText("Position");
+		videoSlider.setMaximum(1000);
 		videoSlider.setValue(0);
 		bottomBtnPanel.add(videoSlider, BorderLayout.NORTH);
+
+
 
 		playBtnPanel = new JPanel();
 		bottomBtnPanel.add(playBtnPanel, BorderLayout.WEST);
@@ -328,16 +365,16 @@ public class Mainframe extends JFrame {
 				// boolean once chosen a new video we have a boolean so that it
 				if (!getMp().isPlaying()) {
 					if (getMp() != null) { // checks video exists and mp is
-											// initialized correctly
+						// initialized correctly
 						getMp().setRate((float) 1); // set normal rate (incase
-													// ffwding)
+						// ffwding)
 						Rewind.checkPlay();
 					}
 				} else { // if the video is playing
 					if (getMp() != null) {
 						getMp().start();
 						getMp().setRate((float) 1); // set normal rate (incase
-													// ffwding)
+						// ffwding)
 						Rewind.checkPlay();
 					}
 				}
@@ -408,7 +445,7 @@ public class Mainframe extends JFrame {
 		playBtnPanel.add(volSlider);
 
 		// creates media player where video is played on
-		setMp(mpf.newEmbeddedMediaPlayer());
+		mp = (mpf.newEmbeddedMediaPlayer());
 		getMp().setVideoSurface(mpf.newVideoSurface(c));
 		// mp.playMedia("big_buck_bunny_1_minute.avi"); // this is used so when
 		// testing we don't have to rechoose the video every time
@@ -446,6 +483,9 @@ public class Mainframe extends JFrame {
 		});
 		mp3Selectbtn.setBounds(503, 12, 500, 25);
 		topMediaBtnPanel.add(mp3Selectbtn);
+
+		executorService.scheduleAtFixedRate(new UpdateRunnable(mp), 0L, 1L, TimeUnit.SECONDS);
+
 	}
 
 	/**
@@ -468,8 +508,6 @@ public class Mainframe extends JFrame {
 	public static void changeVideo() {
 		getMp().playMedia(video);
 		lblVideo.setText("VIDEO : " + video);
-		videoSlider.setMaximum((int) getMp().getLength());
-		videoSlider.setValue(0);
 	}
 
 	/**
@@ -502,25 +540,105 @@ public class Mainframe extends JFrame {
 		return mp;
 	}
 
-	public static void setMp(EmbeddedMediaPlayer mp) {
-		Mainframe.mp = mp;
-	}
-
 	public static void addToList1(String audioName) {
 		if (!model_1.contains(audioName)) {
 			model_1.addElement(audioName);
 		}
 	}
 
-	public static void addToTable(int timeEntered, int totalLength, String name) {
+	public static void addToTable(String timeEntered, int totalLength, String name) {
 		// check not invalid time
-		if (timeEntered + totalLength < mp.getLength()) {
-			Object[] newRow = { Integer.toString(timeEntered), Integer.toString(totalLength), name };
+		//if (timeEntered + (int)mp.getTime() < (int)mp.getLength()) {
+			Object[] newRow = { timeEntered, Integer.toString(totalLength), name };
 			DefaultTableModel model = (DefaultTableModel) audioListCurrentAdded.getModel();
 			model.addRow(newRow);
-		} else {
+		//} else {
 			// error message
+		//}
+	}
+
+	private final class UpdateRunnable implements Runnable {
+
+		private final EmbeddedMediaPlayer mp;
+
+		private UpdateRunnable(EmbeddedMediaPlayer mp) {
+			this.mp = mp;
+		}
+
+		@Override
+		public void run() {
+			final long time = mp.getTime();
+			final int position = (int)(mp.getPosition() * 1000.0f);
+
+			// Updates to user interface components must be executed on the Event
+			// Dispatch Thread
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					if(mp.isPlaying()) {
+						updateTime(time);
+						updatePosition(position);
+					}
+				}
+			});
 		}
 	}
 
+	private String updateTime(long millis){
+		String s = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis), TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)), TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+		System.out.println(s);
+		return s;
+		//timeLabel.setText(s);
+	}
+
+	private void updatePosition(int value){
+		// positionProgressBar.setValue(value);
+		videoSlider.setValue(value);
+	}
+
+	/**
+	 * Broken out position setting, handles updating mediaPlayer
+	 */
+	private void setSliderBasedPosition() {
+		if(!mp.isSeekable()) {
+			return;
+		}
+		float positionValue = videoSlider.getValue() / 1000.0f;
+		// Avoid end of file freeze-up
+		if(positionValue > 0.99f) {
+			positionValue = 0.99f;
+		}
+		mp.setPosition(positionValue);
+	}
+
+	private void updateUIState() {
+		if(!mp.isPlaying()) {
+			// Resume play or play a few frames then pause to show current position in video
+			mp.play();
+			if(!mousePressedPlaying) {
+				try {
+					// Half a second probably gets an iframe
+					Thread.sleep(500);
+				}
+				catch(InterruptedException e) {
+					// Don't care if unblocked early
+				}
+				mp.pause();
+			}
+		}
+		long time = mp.getTime();
+		int position = (int)(mp.getPosition() * 1000.0f);
+		updateTime(time);
+		updatePosition(position);
+	}
+
+	public float audioLength(String filename) throws UnsupportedAudioFileException, IOException{
+		File file = new File(filename);
+		AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(file);
+		AudioFormat format = audioInputStream.getFormat();
+		long audioFileLength = file.length();
+		int frameSize = format.getFrameSize();
+		float frameRate = format.getFrameRate();
+		return (audioFileLength / (frameSize * frameRate));
+	}
 }
