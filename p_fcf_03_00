@@ -4,18 +4,22 @@ import java.io.File;
 import javax.swing.filechooser.FileFilter;
 
 public class fileChoseFilter {
-	
+
 	private static FileFilter filter;
-	
-	public static FileFilter getFilterType(boolean isVideo){
+
+	public static FileFilter getFilterType(boolean isVideo, boolean isEdit){
 		if(isVideo){
 			videoFilter();
 		} else {
-			audioFilter();
+			if (!isEdit){
+				audioFilter();
+			} else{
+				audioisEditFilter();
+			}
 		}
 		return filter;
 	}
-	
+
 	/**
 	 * sets JChooser filter for videos, to directories + either .avi or .mp4 video files
 	 */
@@ -55,4 +59,32 @@ public class fileChoseFilter {
 			}
 		};
 	}
+
+	private static void audioisEditFilter(){
+		filter = new FileFilter() {
+			public String getDescription() {
+				return "MP3 commentary audio (*.mp3)";
+			}
+			@Override
+			public boolean accept(File f) {
+				if (f.isDirectory()) {
+					return true;
+				} else {
+					String filename = f.getName().toLowerCase();
+					if (filename.endsWith(".mp3")){
+						//check filename exists
+						int index = filename.lastIndexOf(".mp3");
+						filename = filename.substring(0, index);
+						String fileText = "." + filename + ".txt";
+						File f2 = new File(fileText);
+						if (f2.isFile()){
+							return true;
+						}
+					}
+					return false;
+				}
+			}
+		};
+	}
+
 }
