@@ -16,7 +16,7 @@ public class MediaSelection extends JPanel implements ActionListener {
 	 * Initialized variables required
 	 */
 	private static final long serialVersionUID = 1L;
-	private JButton mp3, festival;
+	private JButton mp3, festival, editFestival;
 	protected JFrame frame;
 	protected boolean isvideo;
 	private JFileChooser chooser;
@@ -27,6 +27,7 @@ public class MediaSelection extends JPanel implements ActionListener {
 	protected JFrame psmp3 = new JFrame();
 	protected JPanel pscontentPane;
 	private FileFilter filter;
+	private boolean isEdit;
 
 	/**
 	 * This constructor adds buttons onto a new frame's Panel, if it's mp3
@@ -40,13 +41,20 @@ public class MediaSelection extends JPanel implements ActionListener {
 			add(mp3);
 
 			//__________________________________________________________________________ FESTIVAL BUTTON
-			festival = new JButton("Add Commentary");
+			festival = new JButton("Add commentary mp3");
 			festival.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					CommentaryAdd.getWindows();
-					CommentaryAdd.start();
+					CommentaryAdd.start(false);
 				}});
 			add(festival);
+
+			//__________________________________________________________________________ MP3 BUTTON
+			editFestival = new JButton("Edit commentary mp3 file");
+			editFestival.addActionListener(this);
+			add(festival);
+			add(editFestival);
+
 		}
 	}
 
@@ -56,13 +64,17 @@ public class MediaSelection extends JPanel implements ActionListener {
 	 * changes according to whether the FileChooser is the video or audio
 	 */
 	public void actionPerformed(ActionEvent e) {
+		isEdit = false;
+		if (e.getSource() == editFestival){
+			isEdit = true;
+		}
 		chooser = new JFileChooser(); 
 		chooser.setCurrentDirectory(new java.io.File("."));
 		chooser.setDialogTitle(choosertitle);
 
 		//adding filter to the file chooser
-		filter = fileChoseFilter.getFilterType(isvideo);
-		
+		filter = fileChoseFilter.getFilterType(isvideo, isEdit);
+
 		chooser.setFileFilter(filter); // sets filter according to if it's a video/ audio
 		chooser.setAcceptAllFileFilterUsed(false);
 
@@ -72,10 +84,17 @@ public class MediaSelection extends JPanel implements ActionListener {
 				Mainframe.setVideoSource(videoFile); // sets selected video from file chooser as main source
 				Mainframe.changeVideo(); // changes main video to the chosen video file
 			} else {
-				musicFile = chooser.getSelectedFile().getAbsolutePath();// gets the chosen audio file name
-				Mainframe.setAudioSource(musicFile);// sets selected video from file chooser as main source
-				//new SubmitMergeMp3Frame(); // goes into a pop up asking to submit the mp3
-				Mainframe.addToList(false,musicFile);
+				if (!isEdit){
+					musicFile = chooser.getSelectedFile().getAbsolutePath();// gets the chosen audio file name
+					Mainframe.setAudioSource(musicFile);// sets selected video from file chooser as main source
+					//new SubmitMergeMp3Frame(); // goes into a pop up asking to submit the mp3
+					Mainframe.addToList1(musicFile);
+				} else {
+					musicFile = chooser.getSelectedFile().getAbsolutePath();// gets the chosen audio file name
+					Mainframe.setAudioSource(musicFile);// sets selected video from file chooser as main source
+					CommentaryAdd.getWindows();
+					CommentaryAdd.start(true);
+				}
 			}
 		}
 	}
@@ -104,7 +123,7 @@ public class MediaSelection extends JPanel implements ActionListener {
 							isMSOpen = false;
 						}});
 			frame.getContentPane().add(panel);
-			frame.setSize(200,100);
+			frame.setSize(220,130);
 			frame.setVisible(true);
 		}
 	}
