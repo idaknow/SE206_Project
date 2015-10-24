@@ -71,7 +71,7 @@ public class CommentaryAdd extends JFrame {
 		if (!isEdit){
 			commentary.setText("Add Commentary here");
 		} else {
-			userMp3Name = Mainframe.getAudioSource();
+			userMp3Name = Mainframe.getAudioSourcePath();
 			File f1 = new File (userMp3Name);
 			String name = f1.getName();
 			int i = name.indexOf(".mp3");
@@ -114,7 +114,7 @@ public class CommentaryAdd extends JFrame {
 					if (!isEdit){
 						userMp3Name = nameFilePopup(); // prompts user for the new mp3 file name
 					} else {
-						userMp3Name = Mainframe.getAudioSource();
+						userMp3Name = Mainframe.getAudioSourcePath();
 					}
 					if (userMp3Name != null){ // checks cancel hasn't been pressed
 						functionality.Merge m = new functionality.Merge(userMp3Name, false, commentary.getText(), isEdit);
