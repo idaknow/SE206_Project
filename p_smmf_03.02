@@ -54,7 +54,7 @@ public class SubmitMergeMp3Frame {
 		btnYes.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-				if ((Mainframe.getAudioSource() != null)){ // checks an audio source is mentioned
+				if ((Mainframe.getAudioSourcePath() != null)){ // checks an audio source is mentioned
 
 					String userVideoName = nameFilePopup();//get file name to save video as
 
