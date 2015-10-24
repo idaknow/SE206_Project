@@ -2,12 +2,19 @@ package GUI;
 import java.awt.Dimension;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+
 import javax.swing.filechooser.FileFilter;
+
+import functionality.SaveProjFiles;
+
 import javax.swing.JFileChooser;
 
 // BY IDA DE SMET
@@ -69,7 +76,7 @@ public class MediaSelection extends JPanel implements ActionListener {
 			isEdit = true;
 		}
 		chooser = new JFileChooser(); 
-		chooser.setCurrentDirectory(new java.io.File("."));
+		chooser.setCurrentDirectory(new File(System.getProperty("user.home")+"/VIDIVOX"));
 		chooser.setDialogTitle(choosertitle);
 
 		//adding filter to the file chooser
@@ -81,8 +88,31 @@ public class MediaSelection extends JPanel implements ActionListener {
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) { 
 			if (isvideo){
 				videoFile = chooser.getSelectedFile().getAbsolutePath(); // gets the chosen video file name
-				Mainframe.setVideoSource(videoFile); // sets selected video from file chooser as main source
-				Mainframe.changeVideo(); // changes main video to the chosen video file
+				boolean temp = true;
+				if (Mainframe.getVideoSourcePath() != null){
+					int response = JOptionPane.showConfirmDialog(GUI.Mainframe.getFrame(), "Do you want to save current project before opening the new project?");
+					if (JOptionPane.YES_OPTION == response){
+						try {
+							Mainframe.p.SaveP();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						// say it's saved and opening new proj
+						JOptionPane.showMessageDialog(this, "Old project saved, new project created & opened");
+					}else if(JOptionPane.CANCEL_OPTION == response){
+						temp = false;
+					}
+				}
+				if (temp){
+					Mainframe.setVideoSource(videoFile); // sets selected video from file chooser as main source
+					System.out.println("set vid source");
+					Mainframe.p = new SaveProjFiles(videoFile);
+					System.out.println("new p");
+					Mainframe.p.newProject();
+					System.out.println("new project");
+					Mainframe.changeVideo(); // changes main video to the chosen video file
+					System.out.println("changed vid");
+				}
 			} else {
 				if (!isEdit){
 					musicFile = chooser.getSelectedFile().getAbsolutePath();// gets the chosen audio file name
@@ -98,6 +128,7 @@ public class MediaSelection extends JPanel implements ActionListener {
 			}
 		}
 	}
+
 
 	/*
 	 * (non-Javadoc)
