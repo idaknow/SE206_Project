@@ -1,0 +1,134 @@
+package functionality;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Map.Entry;
+
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
+public class SaveProjFiles {
+
+	String ProjectName;
+	String VideoName;
+	static String path; //to vidivoxfolder
+	File ProjectFile; //make hidden
+	String VV;
+
+	public SaveProjFiles(String v){
+		String[] split = v.split("/");
+		v = split[split.length-1];
+		int i = v.indexOf(".");
+		v = v.substring(0, i);
+		this.VideoName = v;
+	}
+
+	public static void makeVVFolder(){
+		String VV = System.getProperty("user.home");
+		path = VV + "/VIDIVOX";
+		System.out.println(path);
+		new File(path).mkdir();
+		String message = "Any creations/ projects can be found in your home/VIDIVOX";
+		JOptionPane.showMessageDialog(GUI.Mainframe.getFrame(), message, "Info", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	public String getPath(){
+		return path;
+	}
+
+	// ask what they want to name it? nah
+	// save a folder with name
+	public void newProject(){
+		// add extension if name exists
+		String VV = System.getProperty("user.home");
+		path = VV + "/VIDIVOX";
+		ProjectName = VideoName + "VV";
+		System.out.println("P name: " + ProjectName);
+		boolean exists = true;
+		File temp = new File(path + "/" + ProjectName);
+		while (temp.exists() && temp.isDirectory()){// checks if name already exists
+			System.out.println("temp is file");
+			if (ProjectName.endsWith("VV")){
+				ProjectName = VideoName + "VV"+ "1";
+				System.out.println("ends with VV");
+			} else {
+				/*boolean notFound = true;
+					int i = 0;
+					while (notFound){
+						System.out.println("not found");
+						if (ProjectName.endsWith(Integer.toString(i))) {//
+							if (i == 9){
+								//get digit(s) beforehand and add one to and add a 0
+								//cut ProjectName down and check isn't equal to 0 and store the numbers backwards
+								notFound = false;
+							}else{
+								ProjectName = VideoName + "VV" + (i+1);
+								System.out.println("i+1");
+								notFound = false;
+							}
+						}
+					}*/
+			}
+			temp = new File(path + "/" + ProjectName);
+		}
+		//create folder & hidden text file
+		temp.mkdir();
+		path = path + "/" + ProjectName;
+		System.out.println("path = " + path);
+		ProjectFile = new File(path + "/" /*+ "."*/+ProjectName+".txt");
+		try {
+			ProjectFile.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("file with name: " + path + "/" /*+ "."*/ + ProjectName + ".txt");
+		//ProjectFile = ProjectFile.createNewFile();
+		JOptionPane.showMessageDialog(GUI.Mainframe.getFrame(), "Project '" + ProjectName + "' created in home/VIDIVOX", "Info", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	public void SaveP() throws IOException{
+		//writes audio info to file
+		FileWriter fW = new FileWriter(ProjectFile,false);
+		System.out.println("saving p");
+		fW.write(GUI.Mainframe.getVideoSourcePath() + "\n");
+		System.out.println("Line 1 wrote: " + GUI.Mainframe.getVideoSourcePath());
+		DefaultTableModel infoTable = (DefaultTableModel)GUI.Mainframe.getJTable().getModel();
+		for (int i = 0; i < infoTable.getRowCount(); i++){
+			fW.write(infoTable.getValueAt(i, 0) + "|" + infoTable.getValueAt(i, 1) + "|" + infoTable.getValueAt(i, 2) + "\n");
+			//maybe also copy audio incase they move it? idk
+		}
+		fW.close();
+	}
+
+	public void openProject(String name) throws IOException{
+		ProjectFile = new File(/*"." +*/ name + ".txt"); // this is wrong
+		System.out.println("opening project" + "." + name + ".txt");
+		if (!ProjectFile.isFile()) {
+			JOptionPane.showMessageDialog(GUI.Mainframe.getFrame(), "Sorry, there was an error. Invalid project '" + ProjectName + "'. Please try again.", "Invalid", JOptionPane.ERROR_MESSAGE);
+		} else { // puts all info into JTable
+			BufferedReader brOpen = new BufferedReader(new FileReader(ProjectFile));
+			VideoName = brOpen.readLine();
+			String info;
+			DefaultTableModel infoTable = (DefaultTableModel)GUI.Mainframe.getJTable().getModel();
+			while((info = brOpen.readLine()) != null){
+				String[] tempString = info.split("|");
+				infoTable.addRow(tempString);
+			}
+		}
+		ProjectName = name;
+	}
+
+	// pop-up when they click create/add audio for first time
+	//
+
+	// save back up stuff in a folder (music files incase they move them)
+	// update file when close app or when they update at the time
+
+
+
+}
