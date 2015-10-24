@@ -64,7 +64,9 @@ public class Merge {
 
 	protected void videoMerge(){
 		//delete's audio off actual video
-		String cmd1 = "ffmpeg -i " + Mainframe.getVideoSource() + " -an .vid.avi";
+		//add a pop up to check if you want to actually strip it
+		//int cmd = JOptionPane.showConfirmDialog(this, "Do you want to remove video audio?");
+		String cmd1 = "ffmpeg -i " + Mainframe.getVideoSourcePath() + " -an .vid.avi";
 		ProcessBuilder pb1 = new ProcessBuilder("/bin/bash", "-c", cmd1);
 
 		try {
@@ -75,8 +77,10 @@ public class Merge {
 		String videoPath = null;
 		videoPath = System.getProperty("user.dir") + "/" +name + extension;
 
+		// need to loop somehow
+		// ffmpeg -y -i a.mp4 -itsoffset 00:00:30 sng.m4a -map 0:0 -map 1:0 -c:v copy -preset ultrafast -async 1 out.mp4
 		//merges audio & video
-		String cmd2 = "ffmpeg -i " + Mainframe.getVideoSource() + " -i " + Mainframe.getAudioSource() + " " + videoPath/* + userVideoName + extension*/; //combines the video and audio
+		String cmd2 = "ffmpeg -i " + Mainframe.getVideoSourcePath() + " -i " + Mainframe.getAudioSourcePath() + " " + videoPath/* + userVideoName + extension*/; //combines the video and audio
 		ProcessBuilder pb2 = new ProcessBuilder("/bin/bash", "-c", cmd2);
 		try {
 			Process p2 = pb2.start();
