@@ -13,6 +13,7 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -36,6 +37,7 @@ import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
@@ -50,6 +52,7 @@ import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.FlowLayout;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -64,8 +67,8 @@ public class Mainframe extends JFrame {
 	private JButton playbutton, pausebutton, ffdbutton, rwdbutton, mp3Selectbtn, videoSelectbtn, mutebutton;
 	private JSlider volSlider;
 	private static EmbeddedMediaPlayer mp;
-	static String video;
-	private static String audio;
+	static String videoPathName;
+	private static String audioPathName;
 	protected static boolean ffd = false;
 	protected static boolean rwd = true;
 	protected int videoLength;
@@ -92,6 +95,7 @@ public class Mainframe extends JFrame {
 	private static DefaultListModel<String[]> model_2;
 	private JButton btnRemove;
 	private JLabel lblSelectedAudio;
+	private JLabel lblProject;
 	private JButton openEditedAudio;
 	// private JSlider videoSlider;
 	private JPanel playBtnPanel;
@@ -99,7 +103,10 @@ public class Mainframe extends JFrame {
 	private boolean mousePressedPlaying;
 	private CardLayout currentCard;
 	private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-
+	private static JFrame frame;
+	static functionality.SaveProjFiles p;
+	static String videoSimpleName;
+	static String audioSimpleName;
 	/**
 	 * Initialize the contents of the frame.
 	 */
@@ -107,7 +114,7 @@ public class Mainframe extends JFrame {
 
 
 		// Creates the main JFrame
-		JFrame frame = new JFrame("mainAp");
+		frame = new JFrame("mainAp");
 		frame.setTitle("VIDIVOX : BY IDA");
 		frame.setLocation(100, 100);
 		frame.setSize(1200, 600);
@@ -140,7 +147,9 @@ public class Mainframe extends JFrame {
 
 		lblVideo = new JLabel("VIDEO: ");
 		topAudioBtns.add(lblVideo, BorderLayout.NORTH);
-
+		//lblProject = new JLabel("PROJ: ");
+		//topAudioBtns.add(lblVideo, BorderLayout.WEST);
+		
 		btnNewButton = new JButton("OPEN/ CREATE/ EDIT AUDIO");
 		btnNewButton.setFont(new Font("Tahoma", Font.BOLD, 16));
 		btnNewButton.addActionListener(new ActionListener() {
@@ -150,7 +159,7 @@ public class Mainframe extends JFrame {
 				if (getMp().isPlaying()) {
 					getMp().pause();
 				}
-				if (Mainframe.getVideoSource() == null) {
+				if (Mainframe.getVideoSourcePath() == null) {
 					new ChooseAudioTypeFrame();
 				} else if (!ms.isMSOpen) {
 					ms.start(false);
@@ -174,12 +183,12 @@ public class Mainframe extends JFrame {
 					if (mp.isPlaying()) {
 						mp.pause();
 					}
-					String time = updateTime(mp.getTime());
+					String time = updateTime(mp.getTime()); // error exists here. nEED TO CHECK LABEL IS A PATH
 					if (JOptionPane.showConfirmDialog(audioListPanel,
-							"Do you want to add audio file '" + "name" + "' to this video at current movie time ("
+							"Do you want to add audio file '" + audioSimpleName + "' to this video at current movie time ("
 									+ time + ")",
 									"Add Audio to video", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-						
+
 						float audioLength = 0;
 						try {
 							audioLength = audioLength(lblSelectedAudio.getText());
@@ -451,6 +460,14 @@ public class Mainframe extends JFrame {
 		// testing we don't have to rechoose the video every time
 
 		btnSeeAllAudio = new JButton("Save new video");
+		btnSeeAllAudio.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					p.SaveP();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}});
 		bottomBtnPanel.add(btnSeeAllAudio, BorderLayout.EAST);
 		btnSeeAllAudio.setFont(new Font("Tahoma", Font.BOLD, 16));
 
@@ -479,49 +496,89 @@ public class Mainframe extends JFrame {
 		mp3Selectbtn.setFont(new Font("Tahoma", Font.BOLD, 18));
 		mp3Selectbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser(); 
+				chooser.setCurrentDirectory(new java.io.File("."));
+				chooser.setDialogTitle("Open Project");
+				FileFilter f = new FileFilter() {
+					public String getDescription() {
+						return "VIDIVOX VV Projects";
+					}
+					@Override
+					public boolean accept(File f) {
+						if (f.isDirectory()) {
+							return true;
+						} else {
+							//String filename = f.getName().toLowerCase();
+							if ((new File(f.getPath() + "/." + f.getName() + ".txt")).exists()){
+								return true;
+							}
+							return false;
+						}
+					}
+				};
+				chooser.setFileFilter(f);
+				chooser.setAcceptAllFileFilterUsed(false);
+				if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) { 
+					try {
+						p.openProject(chooser.getSelectedFile().getAbsolutePath());
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+
 			}
 		});
 		mp3Selectbtn.setBounds(503, 12, 500, 25);
 		topMediaBtnPanel.add(mp3Selectbtn);
 
 		executorService.scheduleAtFixedRate(new UpdateRunnable(mp), 0L, 1L, TimeUnit.SECONDS);
-
+		functionality.SaveProjFiles.makeVVFolder();
 	}
 
 	/**
 	 * Set's video as the input String s from other classes
 	 */
 	public static void setVideoSource(String string) {
-		video = string;
+		videoPathName = string;
+		String[] temp = videoPathName.split("/");
+		videoSimpleName = temp[temp.length - 1];
 	}
 
 	/**
 	 * Set's audio as the input String s from other classes
 	 */
 	public static void setAudioSource(String s) {
-		audio = s;
+		audioPathName = s;
+		String[] temp = audioPathName.split("/");
+		audioSimpleName = temp[temp.length - 1];
 	}
 
 	/**
 	 * Changes the current video media being played
 	 */
 	public static void changeVideo() {
-		getMp().playMedia(video);
-		lblVideo.setText("VIDEO : " + video);
+		if (mp.getLength() != 0){
+			System.out.println("mp == 0");
+		} else {
+
+		}
+		getMp().playMedia(videoPathName);
+		lblVideo.setText("VIDEO : " + videoSimpleName);
+
 	}
 
 	/**
 	 * returns the current video
 	 */
-	public static String getVideoSource() {
-		return video;
+	public static String getVideoSourcePath() {
+		return videoPathName;
 	}
 
 	/**
 	 * returns the current audio
 	 */
-	public static String getAudioSource() {
-		return audio;
+	public static String getAudioSourcePath() {
+		return audioPathName;
 	}
 
 	public static boolean getRwd() {
@@ -549,11 +606,11 @@ public class Mainframe extends JFrame {
 	public static void addToTable(String timeEntered, int totalLength, String name) {
 		// check not invalid time
 		//if (timeEntered + (int)mp.getTime() < (int)mp.getLength()) {
-			Object[] newRow = { timeEntered, Integer.toString(totalLength), name };
-			DefaultTableModel model = (DefaultTableModel) audioListCurrentAdded.getModel();
-			model.addRow(newRow);
+		Object[] newRow = { timeEntered, Integer.toString(totalLength), name };
+		DefaultTableModel model = (DefaultTableModel) audioListCurrentAdded.getModel();
+		model.addRow(newRow);
 		//} else {
-			// error message
+		// error message
 		//}
 	}
 
@@ -640,5 +697,13 @@ public class Mainframe extends JFrame {
 		int frameSize = format.getFrameSize();
 		float frameRate = format.getFrameRate();
 		return (audioFileLength / (frameSize * frameRate));
+	}
+
+	public static JTable getJTable(){
+		return audioListCurrentAdded;
+	}
+
+	public static Component getFrame(){
+		return frame;
 	}
 }
