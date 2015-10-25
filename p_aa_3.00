@@ -1,0 +1,55 @@
+package functionality;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
+public class AddingAudio {
+
+	private static JTable audioTable;
+	private static JList audioList;
+	
+	public AddingAudio(){
+		this.audioTable = GUI.Mainframe.getJTable();
+		this.audioList = GUI.Mainframe.getList();
+	}
+
+	public static void removeAudio(boolean isList, String selectedAudio){
+		if (isList){
+			JList list = GUI.Mainframe.getList();
+			DefaultListModel model_1 = (DefaultListModel) list.getModel();
+			int i = model_1.indexOf(selectedAudio);
+			if (i >= 0) {
+				model_1.removeElementAt(i);
+			} 
+		}else {
+			JTable table = GUI.Mainframe.getJTable();
+			DefaultTableModel dtm = (DefaultTableModel) table.getModel();
+			for (int i = 0; i < dtm.getRowCount(); i++) {
+				if (selectedAudio == dtm.getValueAt(i, 2)) {
+					dtm.removeRow(i);
+					i = dtm.getRowCount();
+				}
+			}
+		}
+	}
+	
+	public void addToTable(String timeEntered, int totalLength, String name) {
+		// check not invalid time
+		//if (timeEntered + (int)mp.getTime() < (int)mp.getLength()) {
+		Object[] newRow = { timeEntered, Integer.toString(totalLength), name };
+		DefaultTableModel model = (DefaultTableModel) audioTable.getModel();
+		model.addRow(newRow);
+		//} else {
+		// error message
+		//}
+	}
+	
+	public void addToList1(String audioName) {
+		DefaultListModel model_1 = (DefaultListModel) audioList.getModel();
+		if (!model_1.contains(audioName)) {
+			model_1.addElement(audioName);
+		}
+	}
+}
