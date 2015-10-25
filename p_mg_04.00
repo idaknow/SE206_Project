@@ -1,0 +1,126 @@
+package functionality;
+import java.io.File;
+import java.io.IOException;
+
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
+import GUI.CommentaryAdd;
+import GUI.Mainframe;
+
+/**
+ * Func
+ * @author idaknow
+ *
+ */
+public class Merge {
+
+	private String name;
+	private String extension;
+	private boolean acceptableName;
+	private boolean isVideo;
+	private String text;
+	private boolean isEdit;
+	private static boolean vidChange = false;
+
+	public Merge(String name, boolean isVideo, String text, boolean isEdit){
+		acceptableName = true;
+		this.name = name;
+		this.isVideo = isVideo;
+		this.text = text;
+		this.isEdit = isEdit;
+	}
+	
+	public static void setChange(boolean vc){
+		vidChange = vc;
+	}
+	
+	public String previewGetName(){
+		return functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + ".previewVid.avi";
+	}
+
+	public void start(){
+
+		if (isVideo && isEdit){ // don't want to name check
+			VideoMerge v = new VideoMerge(null, null, true);
+			v.begin();
+		} else {
+			nameWithExtensions(name);// checks if the new mp3 name has extension .mp3
+			nameCheck();
+			if (acceptableName){// if the name isn't null or already exists
+				if (isVideo){
+					VideoMerge v = new VideoMerge(name, extension, isEdit);
+					v.begin();
+				}else {
+					CommentaryMerge c = new CommentaryMerge(name, text, extension);
+					c.start();
+				}
+			}
+		}
+
+	}
+
+	private void nameCheck(){
+		File f = new File(name + extension);// temporary file created
+		if (!checkForSpaces(name)){ // checks the name doesn't contain spaces & isn't null
+			errorMessage("Filename can't contain spaces");
+			acceptableName = false;
+		} else if (f.exists()) { // check file name doesn't already exist
+			if (CommentaryAdd.isEdit){
+				f.delete();
+				acceptableName = true;
+			} else {
+				errorMessage("This filename already exists");
+				acceptableName = false;
+			}
+		} else { // name doesn't exist and passed checkForSpaces
+			acceptableName = true;
+		}
+	}
+
+	/**
+	 * Checks that a video/ audio name that user inputs contains and avi or mp4 extension
+	 *
+	 * Checks that a video/ audio name that user inputs contains a mp3 extension
+	 * If it does, this won't create a file that is double .mp3.mp3
+	 */
+	protected void nameWithExtensions(String s){
+		if (isVideo){
+			extension = ".mp4";
+			if (s.endsWith(".avi")){
+				extension = "";
+			} else if (s.endsWith(".mp4")){
+				extension = "";
+			}
+		} else {
+			extension = ".mp3";
+			if (!isEdit){
+				if (s.endsWith(".mp3")){
+					extension = "";
+				}
+			} else {
+				int i = name.indexOf(".mp3");
+				name = name.substring(0,i);
+			}
+		}
+	}
+
+	/**
+	 * Checks if video/ audio name contains a space/ tab character
+	 */
+	protected static boolean checkForSpaces(String s){
+		if (s == null| s.contains(" ") | s.contains("\t")){
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Launches an error message pop up to tell them of a specified string error
+	 */
+	public void errorMessage(String error){
+		JOptionPane.showMessageDialog(null, this, error, 0);
+	}
+
+}
