@@ -11,20 +11,31 @@ import java.util.Map.Entry;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
+import GUI.Mainframe;
+
 public class SaveProjFiles {
 
-	String ProjectName;
+	static String ProjectName;
 	String VideoName;
 	static String path; //to vidivoxfolder
+	String vPath;
 	File ProjectFile; //make hidden
 	String VV;
 
-	public SaveProjFiles(String v){
-		String[] split = v.split("/");
-		v = split[split.length-1];
-		int i = v.indexOf(".");
-		v = v.substring(0, i);
-		this.VideoName = v;
+	public SaveProjFiles(String v,boolean existingProj){
+		if (existingProj){
+			vPath = v;
+			String[] split = v.split("/");
+			v = split[split.length-1];
+			ProjectName = v;
+			path = System.getProperty("user.home");
+		} else {
+			String[] split = v.split("/");
+			v = split[split.length-1];
+			int i = v.indexOf(".");
+			v = v.substring(0, i);
+			this.VideoName = v;
+		}
 	}
 
 	public static void makeVVFolder(){
@@ -36,8 +47,12 @@ public class SaveProjFiles {
 		JOptionPane.showMessageDialog(GUI.Mainframe.getFrame(), message, "Info", JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	public String getPath(){
+	public static String getPath(){
 		return path;
+	}
+	
+	public static String getProjName(){
+		return ProjectName;
 	}
 
 	// ask what they want to name it? nah
@@ -56,37 +71,24 @@ public class SaveProjFiles {
 				ProjectName = VideoName + "VV"+ "1";
 				System.out.println("ends with VV");
 			} else {
-				/*boolean notFound = true;
-					int i = 0;
-					while (notFound){
-						System.out.println("not found");
-						if (ProjectName.endsWith(Integer.toString(i))) {//
-							if (i == 9){
-								//get digit(s) beforehand and add one to and add a 0
-								//cut ProjectName down and check isn't equal to 0 and store the numbers backwards
-								notFound = false;
-							}else{
-								ProjectName = VideoName + "VV" + (i+1);
-								System.out.println("i+1");
-								notFound = false;
-							}
-						}
-					}*/
+				int i = ProjectName.lastIndexOf("VV");
+				i = Integer.parseInt(ProjectName.substring(i+2));
+				i++;
+				ProjectName = VideoName + "VV" + i;
 			}
 			temp = new File(path + "/" + ProjectName);
 		}
 		//create folder & hidden text file
 		temp.mkdir();
-		path = path + "/" + ProjectName;
+		//path = path + "/" + ProjectName;
 		System.out.println("path = " + path);
-		ProjectFile = new File(path + "/" /*+ "."*/+ProjectName+".txt");
+		ProjectFile = new File(path + "/" + ProjectName + "/" /*+ "."*/+ProjectName+".txt");
 		try {
 			ProjectFile.createNewFile();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("file with name: " + path + "/" /*+ "."*/ + ProjectName + ".txt");
+		System.out.println("file with name: " + path + "/"+ ProjectName + "/" /*+ "."*/ + ProjectName + ".txt");
 		//ProjectFile = ProjectFile.createNewFile();
 		JOptionPane.showMessageDialog(GUI.Mainframe.getFrame(), "Project '" + ProjectName + "' created in home/VIDIVOX", "Info", JOptionPane.INFORMATION_MESSAGE);
 	}
@@ -105,9 +107,9 @@ public class SaveProjFiles {
 		fW.close();
 	}
 
-	public void openProject(String name) throws IOException{
-		ProjectFile = new File(/*"." +*/ name + ".txt"); // this is wrong
-		System.out.println("opening project" + "." + name + ".txt");
+	public void openProject() throws IOException{
+		ProjectFile = new File(/*"." +*/ vPath + "/" + ProjectName + ".txt"); // this is wrong
+		System.out.println("opening project " + ProjectFile.getAbsolutePath());
 		if (!ProjectFile.isFile()) {
 			JOptionPane.showMessageDialog(GUI.Mainframe.getFrame(), "Sorry, there was an error. Invalid project '" + ProjectName + "'. Please try again.", "Invalid", JOptionPane.ERROR_MESSAGE);
 		} else { // puts all info into JTable
@@ -119,8 +121,9 @@ public class SaveProjFiles {
 				String[] tempString = info.split("|");
 				infoTable.addRow(tempString);
 			}
+			Mainframe.setVideoSource(VideoName);
+			Mainframe.changeVideo();
 		}
-		ProjectName = name;
 	}
 
 	// pop-up when they click create/add audio for first time
