@@ -1,0 +1,141 @@
+package functionality;
+
+import java.io.File;
+import java.io.IOException;
+
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
+import GUI.Mainframe;
+
+public class VideoMerge {
+
+	private String name;
+	private String extension;
+	private boolean isEdit;
+	private static boolean preview = false;
+	private static boolean change = false;
+	String vidName;
+	String outputVid = null;
+	String audioName;
+	private DefaultTableModel content;
+	private int totalTime;
+
+	public VideoMerge(String name, String extension, boolean preview){
+		this.name = name;
+		this.preview = preview;
+		this.extension = extension;
+	}
+
+	protected void begin(){
+		stripAudio();
+		mergeTogether();
+		if (!change && preview){ // or check if null
+			String yo = outputVid;
+
+			// find output file and copy past and change name to name;
+		} else if (preview){
+			Mainframe.setVideoSource(outputVid);
+			Mainframe.changeVideo();
+			GUI.EditPanel.setVidLabel("PREVIEWING");
+		} else {
+			//close all windows
+			Mainframe.setVideoSource(outputVid);
+			Mainframe.changeVideo();
+			//actually save video so on last output it becomes the requested name
+		}
+	}
+
+	private void stripAudio(){ //add a pop up to check if you want to strip audio from video first it
+		String message;
+		if (preview){
+			message = "Do you want to inc. the video audio?";
+		} else {
+			message = "Do you want to remove the audio from the current video first?";
+		}
+
+		if (JOptionPane.showConfirmDialog(run.main.getFrame(),
+				message, "Video Audio", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+			String cmd1 = "ffmpeg -i " + Mainframe.getVideoSourcePath() + " -an .vid.avi";
+			ProcessBuilder pb1 = new ProcessBuilder("/bin/bash", "-c", cmd1);
+			try {
+				pb1.start();
+			} catch (IOException e1) { e1.printStackTrace(); }
+			GUI.Mainframe.setVideoSource(".vid.avi"); // new audio-less video
+		} // else do nothing
+	}
+
+	private void mergeTogether(){
+
+		String videoPath = null;
+		videoPath = System.getProperty("user.dir") + "/" +name + extension;
+
+		JTable info = GUI.EditPanel.getJTable();
+		content = (DefaultTableModel) info.getModel();
+
+
+		progress("Please wait while loading");
+
+		//overlay
+		for (int i = 0; i<content.getRowCount(); i++){
+
+			setInfo(i);
+
+			//the process that overlays the video with the audio each time
+			String cmd2 = "ffmpeg -y -i " + vidName + " -i " + audioName +" -filter_complex \"[1:a]adelay=" + totalTime + " [aud1];[aud1][0:a] amix=inputs=2\" " + outputVid; //combines the video and audio
+			ProcessBuilder pb2 = new ProcessBuilder("/bin/bash", "-c", cmd2);
+			try {
+				Process p2 = pb2.start();
+				p2.waitFor(); // waits for process to be finished for each one before continues
+			} catch (IOException | InterruptedException e1) { e1.printStackTrace(); }
+		}
+
+		if(!preview){
+			progress("Finished merging! New video '"+name+"' is now playing");
+		}
+	}
+
+	private void setInfo(int i){
+		if (i == content.getRowCount()-1){
+			vidName = outputVid;
+			if (!preview){
+				outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + name + extension;
+			} else {
+				outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + ".previewVid.avi";
+
+			}
+		} else if (i == 0){
+			vidName = GUI.Mainframe.getVideoSourcePath();
+			System.out.println("vidName: " + vidName);
+			outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + "out.avi";
+			System.out.println(" output vidname: " + outputVid);
+		} else if (i % 2 == 1){
+			vidName = outputVid;
+			outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + "out1.avi";
+		} else {
+			vidName = outputVid;
+			outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + "out.avi";
+		}
+
+		//check if file exists (delete if does)
+		File f = new File(outputVid);
+		if ((new File(outputVid)).exists()){
+			(new File(outputVid)).delete();
+		}
+
+		audioName = (String) content.getValueAt(i, 2);
+
+		String time = (String) content.getValueAt(i, 0);
+		String[] temp = time.split(":");
+		totalTime = Integer.parseInt(temp[0])*1000/60/60 + Integer.parseInt(temp[1])*1000/60 + Integer.parseInt(temp[2])*1000;
+		if (totalTime <= 0){
+			totalTime = 15;
+		}
+	}
+
+	private void progress(String message){
+		JOptionPane.showMessageDialog(run.main.getFrame(), message);
+	}
+
+}
