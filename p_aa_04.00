@@ -11,20 +11,20 @@ public class AddingAudio {
 	private static JList audioList;
 	
 	public AddingAudio(){
-		this.audioTable = GUI.Mainframe.getJTable();
-		this.audioList = GUI.Mainframe.getList();
+		this.audioTable = GUI.EditPanel.getJTable();
+		this.audioList = GUI.EditPanel.getList();
 	}
 
 	public static void removeAudio(boolean isList, String selectedAudio){
 		if (isList){
-			JList list = GUI.Mainframe.getList();
+			JList list = GUI.EditPanel.getList();
 			DefaultListModel model_1 = (DefaultListModel) list.getModel();
 			int i = model_1.indexOf(selectedAudio);
 			if (i >= 0) {
 				model_1.removeElementAt(i);
 			} 
 		}else {
-			JTable table = GUI.Mainframe.getJTable();
+			JTable table = GUI.EditPanel.getJTable();
 			DefaultTableModel dtm = (DefaultTableModel) table.getModel();
 			for (int i = 0; i < dtm.getRowCount(); i++) {
 				if (selectedAudio == dtm.getValueAt(i, 2)) {
