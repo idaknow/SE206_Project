@@ -2,6 +2,7 @@ package GUI;
 import java.io.File;
 
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileView;
 
 public class fileChoseFilter {
 
@@ -85,6 +86,42 @@ public class fileChoseFilter {
 				}
 			}
 		};
+	}
+	
+	public static FileFilter getProjFileFilter(){
+		FileFilter f = new FileFilter() {
+			public String getDescription() {
+				return "VIDIVOX VV Projects";
+			}
+			@Override
+			public boolean accept(File f) {
+				if (f.isDirectory()) {
+					return true;
+				} else {
+					//String filename = f.getName().toLowerCase();
+					if ((new File(f.getPath() + "/." + f.getName() + ".txt")).exists()){
+						return true;
+					}
+					return false;
+				}
+			}
+
+
+		};
+		return f;
+	}
+	
+	public static FileView getProjFileView(){
+		FileView fv = new FileView(){
+			@Override
+			public Boolean isTraversable(File f){
+				if ((new File(f.getPath() + "/"/*+"."*/ + f.getName() + ".txt")).exists()){
+					return false;
+				}
+				return true;
+			}
+		};
+		return fv;
 	}
 
 }
