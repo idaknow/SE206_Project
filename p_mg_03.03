@@ -3,6 +3,8 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 
 import GUI.CommentaryAdd;
 import GUI.Mainframe;
@@ -66,33 +68,77 @@ public class Merge {
 		//delete's audio off actual video
 		//add a pop up to check if you want to actually strip it
 		//int cmd = JOptionPane.showConfirmDialog(this, "Do you want to remove video audio?");
-		String cmd1 = "ffmpeg -i " + Mainframe.getVideoSourcePath() + " -an .vid.avi";
-		ProcessBuilder pb1 = new ProcessBuilder("/bin/bash", "-c", cmd1);
-
-		try {
-			pb1.start();
-		} catch (IOException e1) { e1.printStackTrace(); }
-		GUI.Mainframe.setVideoSource(".vid.avi"); // new audio-less video
-
+		//int cmd = JOptionPane.showConfirmDialog(null, this, "Do you want to remove the audio from current video?", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+		//if(cmd == JOptionPane.YES_OPTION){
+			/*String cmd1 = "ffmpeg -i " + Mainframe.getVideoSourcePath() + " -an .vid.avi";
+			ProcessBuilder pb1 = new ProcessBuilder("/bin/bash", "-c", cmd1);
+			try {
+				pb1.start();
+			} catch (IOException e1) { e1.printStackTrace(); }
+			GUI.Mainframe.setVideoSource(".vid.avi"); // new audio-less video*/
+		//}
+		
+		System.out.println("begun");
+			
 		String videoPath = null;
 		videoPath = System.getProperty("user.dir") + "/" +name + extension;
 
 		// need to loop somehow
 		// ffmpeg -y -i a.mp4 -itsoffset 00:00:30 sng.m4a -map 0:0 -map 1:0 -c:v copy -preset ultrafast -async 1 out.mp4
 		//merges audio & video
-		String cmd2 = "ffmpeg -i " + Mainframe.getVideoSourcePath() + " -i " + Mainframe.getAudioSourcePath() + " " + videoPath/* + userVideoName + extension*/; //combines the video and audio
-		ProcessBuilder pb2 = new ProcessBuilder("/bin/bash", "-c", cmd2);
-		try {
-			Process p2 = pb2.start();
-			errorMessage("Loading video, please wait");// popup here
-			p2.waitFor(); // waits for process to be finished
-			errorMessage("Finished merge, video is now playing");// popup here
 
-			// closes popup here
-		} catch (IOException | InterruptedException e1) { e1.printStackTrace(); }
+		String vidName;
+		String outputVid = null;
+		String audioName;
+		
+		JTable info = GUI.Mainframe.getJTable();
+		DefaultTableModel content = (DefaultTableModel) info.getModel();
+		System.out.println("got table");
+		errorMessage("Loading video, please wait");
+		for (int i = 0; i<content.getRowCount(); i++){
+			System.out.println(content.getRowCount() + "= total rows");
+			if (i == 0){
+				vidName = GUI.Mainframe.getVideoSourcePath();
+				System.out.println("vidName: " + vidName);
+				outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + "out.avi";
+				System.out.println(" output vidname: " + outputVid);
+			} else if (i % 2 == 1){
+				vidName = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" +"out.avi";
+				// delete file if exists (.out1.avi)
+				outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + "out1.avi";
+			} else {
+				//delete file
+				vidName = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" +"out1.avi";
+				outputVid = functionality.SaveProjFiles.getPath() + "/" + functionality.SaveProjFiles.getProjName() + "/" + "out.avi";
+			}
+			File f = new File(outputVid);
+			if ((new File(outputVid)).exists()){
+				(new File(outputVid)).delete();
+			}
+			audioName = (String) content.getValueAt(i, 2);
+			System.out.println("audioName "+ audioName);
+			String time = (String) content.getValueAt(i, 0);
+			String[] temp = time.split(":");
+			int totalTime = Integer.parseInt(temp[0])*1000/60/60 + Integer.parseInt(temp[1])*1000/60 + Integer.parseInt(temp[2])*1000;
+			System.out.println("total Time " + Integer.parseInt(temp[0]));
+			
+			String cmd2 = "ffmpeg -y -i " + vidName + " -i " + audioName +" -filter_complex \"[1:a]adelay=" + totalTime + " [aud1];[aud1][0:a] amix=inputs=2\" " + outputVid; //combines the video and audio
+			ProcessBuilder pb2 = new ProcessBuilder("/bin/bash", "-c", cmd2);
+			try {
+				Process p2 = pb2.start();
+				// popup here
+				p2.waitFor(); // waits for process to be finished
+				errorMessage("Finished merge, video is now playing");// popup here
+				// closes popup here
+			} catch (IOException | InterruptedException e1) { e1.printStackTrace(); }
+			
+			//if it's the last i
+			// make inc userVideoName + extension
+		}
+
 
 		//close all windows
-		Mainframe.setVideoSource(videoPath/* + userVideoName + extension*/);
+		Mainframe.setVideoSource(outputVid/* + userVideoName + extension*/);
 		Mainframe.changeVideo();
 	}
 
