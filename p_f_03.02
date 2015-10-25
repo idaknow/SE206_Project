@@ -1,0 +1,70 @@
+package functionality;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+
+import javax.swing.SwingWorker;
+
+public class Festival extends SwingWorker<Void,Void>{
+	
+	private String text;
+	int pid;
+	Process p;
+	
+	public Festival(String text){
+		this.text = text;
+	}
+	
+	/**
+	 * Calls festival, to preview the users input commentary
+	 */
+	public void preview(){
+		String commentary = "echo \" " + text + "\" | festival --tts";
+		ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c" , commentary);
+		try {
+			p = pb.start();
+			Field pidField = p.getClass().getDeclaredField("pid");
+			pidField.setAccessible(true);
+			pid = (int)pidField.get(p);
+		} catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	@Override
+	protected Void doInBackground() throws Exception {
+		if (!isCancelled()){
+			preview();
+		}
+		while (true){
+			if (isCancelled()){
+				Runtime.getRuntime().exec("kill -INT " + getKillpid());
+				break;
+			}
+		}
+		return null;
+	}
+	
+	protected void done(){
+		if (isCancelled()){
+			try {
+				Runtime.getRuntime().exec("kill -INT " + getKillpid());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	protected String getKillpid() throws IOException{
+		ProcessBuilder cancel = new ProcessBuilder("/bin/bash", "-c", " pstree -p " + pid);
+		Process p = cancel.start();
+		BufferedReader std = new BufferedReader (new InputStreamReader(p.getInputStream()));
+		String line = std.readLine();
+		System.out.println(line);
+		String temp[] = line.split("play\\(");
+		line = temp[1].split("\\)")[0];
+		return line;
+	}
+}
