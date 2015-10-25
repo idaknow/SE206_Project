@@ -33,6 +33,7 @@ public class CommentaryAdd extends JFrame {
 	private JTextArea commentary;
 	private String userMp3Name = null;
 	public static boolean isEdit;
+	private JButton btnPreview;
 
 	/**
 	 * Launches the Adding commentary frame
@@ -93,13 +94,22 @@ public class CommentaryAdd extends JFrame {
 		contentPane.add(commentary);
 
 		//__________________________________________________________________________ PREVIEW BUTTON
-		JButton btnPreview = new JButton("Preview");
+		btnPreview = new JButton("Preview");
 		btnPreview.addActionListener(new ActionListener() {
+			Festival f;
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (txtLengthCheck(commentary.getText())){
-					Festival f = new Festival(commentary.getText());
-					f.preview();
+					if (btnPreview.getText().equals("Preview")){
+						f = new Festival(commentary.getText());
+						f.preview();
+						btnPreview.setText("Stop");
+					} else {
+						f.cancel(true);
+						btnPreview.setText("Preview");	
+					}
+				} else {
+					//error for too long commentary
 				}
 			}
 		});
