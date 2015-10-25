@@ -13,6 +13,7 @@ import java.io.IOException;
 
 import javax.swing.filechooser.FileFilter;
 
+import functionality.AddingAudio;
 import functionality.SaveProjFiles;
 
 import javax.swing.JFileChooser;
@@ -106,7 +107,7 @@ public class MediaSelection extends JPanel implements ActionListener {
 				if (temp){
 					Mainframe.setVideoSource(videoFile); // sets selected video from file chooser as main source
 					System.out.println("set vid source");
-					Mainframe.p = new SaveProjFiles(videoFile);
+					Mainframe.p = new SaveProjFiles(videoFile,false);
 					System.out.println("new p");
 					Mainframe.p.newProject();
 					System.out.println("new project");
@@ -118,7 +119,8 @@ public class MediaSelection extends JPanel implements ActionListener {
 					musicFile = chooser.getSelectedFile().getAbsolutePath();// gets the chosen audio file name
 					Mainframe.setAudioSource(musicFile);// sets selected video from file chooser as main source
 					//new SubmitMergeMp3Frame(); // goes into a pop up asking to submit the mp3
-					Mainframe.addToList1(musicFile);
+					AddingAudio a = new AddingAudio();
+					a.addToList1(musicFile);
 				} else {
 					musicFile = chooser.getSelectedFile().getAbsolutePath();// gets the chosen audio file name
 					Mainframe.setAudioSource(musicFile);// sets selected video from file chooser as main source
