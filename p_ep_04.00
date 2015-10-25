@@ -1,0 +1,301 @@
+package GUI;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.UIManager;
+import javax.swing.border.TitledBorder;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.DefaultListModel;
+import javax.swing.JSlider;
+
+import java.io.File;
+import java.io.IOException;
+
+import javax.sound.sampled.UnsupportedAudioFileException;
+
+import javax.swing.table.DefaultTableModel;
+
+import functionality.*;
+
+public class EditPanel extends JPanel{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JPanel contentPane = Mainframe.getContentPanel();
+	static JLabel lblNewLabel, lblProj;
+	private JPanel btmEditPanel, topInfoPanel, audioMainBtn, editPanel, audioListPanel, tableListPanel;
+	private static JList<String> audioList;
+	private static JTable audioTable;
+	private static DefaultListModel<String> model_1;
+	private static JLabel lblSelectedAudio, lblVideo;
+	private JButton openEditedAudio, btnRemoveAudio, btnAddSelectedAudio, btnPrevAllAudio, btnSaveVid, btnPrevAll, btnAddCreateOpen;
+	private Merge previewM;
+	private static functionality.SaveProjFiles p;
+
+	EditPanel(){
+		editPanel = new JPanel();
+		editPanel.setBackground(Color.BLACK);
+		editPanel.setBounds(781, 0, 697, 744);
+		contentPane.add(editPanel);
+		editPanel.setLayout(null);
+
+		audioMainBtn = new JPanel();
+		audioMainBtn.setBackground(Color.BLACK);
+		audioMainBtn.setBounds(15, 72, 671, 38);
+		editPanel.add(audioMainBtn);
+		audioMainBtn.setLayout(new BorderLayout(0, 0));
+
+		btnAddCreateOpen = new JButton("ADD/ CREATE/ OPEN AUDIO");
+		btnAddCreateOpen.setBackground(Color.BLACK);
+		btnAddCreateOpen.setForeground(Color.WHITE);
+		btnAddCreateOpen.setFont(new Font("Tahoma", Font.BOLD, 23));
+		btnAddCreateOpen.addActionListener(new ActionListener() {
+			MediaSelection ms = new MediaSelection(false);
+
+			public void actionPerformed(ActionEvent e) {
+				if (Mainframe.getMp().isPlaying()) {
+					Mainframe.getMp().pause();
+				}
+				if (Mainframe.getVideoSourcePath() == null) {
+					JOptionPane.showMessageDialog(run.main.getFrame(), "Please select a video file first");
+				} else if (!ms.isMSOpen) {
+					ms.start(false);
+				} else if (ms.isMSOpen) {
+					ms.BringToFront();
+				}
+			}
+		});
+
+		audioMainBtn.add(btnAddCreateOpen);
+
+		tableListPanel = new JPanel();
+		tableListPanel.setBackground(Color.BLACK);
+		tableListPanel.setBounds(15, 125, 671, 537);
+		editPanel.add(tableListPanel);
+		tableListPanel.setLayout(null);
+
+		audioList = new JList<String>();
+		audioList.setBounds(0, 0, 671, 211);
+		audioList.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Select an open audio from below to add:", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+		audioList.setToolTipText("Audio");
+		model_1 = new DefaultListModel<String>();
+		audioList.setModel(model_1);
+		audioList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				if (!model_1.isEmpty()) {
+					JList<String> jl = (JList) arg0.getSource();
+					int i = jl.locationToIndex(arg0.getPoint());
+					if (i >= 0) {
+						Object o = jl.getModel().getElementAt(i);
+						lblNewLabel.setText(o.toString());
+					}
+				}
+			}
+		});
+
+		tableListPanel.add(audioList);
+
+		btnAddSelectedAudio = new JButton("Add selected audio");
+		btnAddSelectedAudio.setBackground(Color.BLACK);
+		btnAddSelectedAudio.setForeground(Color.WHITE);
+		btnAddSelectedAudio.setFont(new Font("Tahoma", Font.BOLD, 16));
+		btnAddSelectedAudio.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// select a
+				// pop up
+				Mainframe.pauseMP();
+				if (isSelectedAudio()){
+					String time = Mainframe.getVSB().updateTime(Mainframe.getMp().getTime()); // error exists here. nEED TO CHECK LABEL IS A PATH
+					if (JOptionPane.showConfirmDialog(audioListPanel,
+							"Do you want to add audio file '" + Mainframe.audioSimpleName + "' to this video at current movie time ("
+									+ time + ")",
+									"Add Audio to video", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+
+						float audioLength = 0;
+						try {
+							audioLength = Mainframe.getVSB().audioLength(lblNewLabel.getText());
+						} catch (UnsupportedAudioFileException | IOException e1) {
+							e1.printStackTrace();
+						}
+						AddingAudio a = new AddingAudio();
+						a.addToTable(Mainframe.getVSB().updateTime(Mainframe.getMp().getTime()), (int) audioLength, lblNewLabel.getText());
+						// change panel
+						//
+					}
+
+				} else {
+					JOptionPane.showMessageDialog(run.main.getFrame(), "Please select an audio to add first");
+				}
+			}
+		});
+
+		btnAddSelectedAudio.setBounds(450, 217, 215, 66);
+
+		tableListPanel.add(btnAddSelectedAudio);
+
+		audioTable = new JTable();
+		audioTable.setBounds(0, 290, 671, 247);
+		audioTable.setBorder(new TitledBorder(null, "Added audio", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		audioTable.setToolTipText("Added Audio");
+		audioTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		audioTable.setFillsViewportHeight(true);
+		audioTable.setModel(new DefaultTableModel(new String[] { "Time", "Total Time", "Name" }, 0));
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setViewportView(audioTable);
+		audioTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg1) {
+				JTable jl = (JTable) arg1.getSource();
+				int i = jl.rowAtPoint(arg1.getPoint());
+				if (i >= 0) {
+					if (jl.getValueAt(i, 2) != null) {
+						String value = jl.getValueAt(i, 2).toString();
+						if (value != null) {
+							lblNewLabel.setText(value);
+						}
+					}
+				}
+			}
+
+		});
+		tableListPanel.add(audioTable);
+
+		lblSelectedAudio = new JLabel("Selected Audio:");
+		lblSelectedAudio.setForeground(Color.WHITE);
+		lblSelectedAudio.setFont(new Font("Tahoma", Font.BOLD, 16));
+		lblSelectedAudio.setBounds(10, 214, 141, 20);
+		tableListPanel.add(lblSelectedAudio);
+
+		lblNewLabel = new JLabel("--");
+		lblNewLabel.setForeground(Color.WHITE);
+		lblNewLabel.setBounds(10, 241, 435, 38);
+		tableListPanel.add(lblNewLabel);
+
+		topInfoPanel = new JPanel();
+		topInfoPanel.setBackground(Color.BLACK);
+		topInfoPanel.setBounds(15, 16, 671, 48);
+		editPanel.add(topInfoPanel);
+		topInfoPanel.setLayout(new GridLayout(0, 1, 0, 0));
+
+		lblProj = new JLabel("PROJ:");
+		lblProj.setFont(new Font("Tahoma", Font.BOLD, 17));
+		lblProj.setForeground(Color.WHITE);
+		topInfoPanel.add(lblProj);
+
+		lblVideo = new JLabel("VIDEO: ");
+		lblVideo.setFont(new Font("Tahoma", Font.BOLD, 17));
+		lblVideo.setForeground(Color.WHITE);
+		topInfoPanel.add(lblVideo);
+
+		btmEditPanel = new JPanel();
+		btmEditPanel.setBackground(Color.BLACK);
+		btmEditPanel.setBounds(15, 674, 671, 54);
+		editPanel.add(btmEditPanel);
+		btmEditPanel.setLayout(new GridLayout(0, 3, 0, 0));
+
+		btnRemoveAudio = new JButton("REMOVE AUDIO");
+		btnRemoveAudio.setForeground(Color.WHITE);
+		btnRemoveAudio.setBackground(Color.BLACK);
+		btnRemoveAudio.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// if certain layout
+				if (isSelectedAudio()){
+					String selectedAudio = lblNewLabel.getText();
+					boolean isList = false;
+					if (openEditedAudio.getText() == "Display edits") {
+						isList = true;
+					}
+					functionality.AddingAudio.removeAudio(isList, selectedAudio);
+				} else {
+					JOptionPane.showMessageDialog(run.main.getFrame(), "Please select an audio to remove first");
+				}
+			}
+		});
+
+		btmEditPanel.add(btnRemoveAudio);
+
+		btnPrevAll = new JButton("PREVIEW ALL");
+		btnPrevAll.setBackground(Color.BLACK);
+		btnPrevAll.setForeground(Color.WHITE);
+		btnPrevAll.setFont(new Font("Tahoma", Font.BOLD, 16));
+		btnPrevAll.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (btnPrevAll.getText().equals("PREVIEW ALL")){
+					if(((DefaultTableModel)audioTable.getModel()).getRowCount() != 0){
+						previewM = new Merge(null, true, null, true);
+						previewM.start();
+						btnPrevAllAudio.setText("STOP PREVIEW");
+					} else {
+						JOptionPane.showMessageDialog(run.main.getFrame(), "No new audio added");
+					}
+				} else {
+					File f = new File(previewM.previewGetName());
+
+					f.delete();
+					btnPrevAllAudio.setText("PREVIEW ALL");
+				}
+			}
+		});
+		btmEditPanel.add(btnPrevAll);
+
+		btnSaveVid = new JButton("SAVE VIDEO");
+		btnSaveVid.setBackground(Color.BLACK);
+		btnSaveVid.setForeground(Color.WHITE);
+		btnSaveVid.setFont(new Font("Tahoma", Font.BOLD, 17));
+		btnSaveVid.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//check table not empty && video chosen
+				if (Mainframe.videoSimpleName != null && (((DefaultTableModel)audioTable.getModel()).getRowCount() != 0)){
+					try {
+						p.SaveP();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					//ask for name
+					String name = JOptionPane.showInputDialog(this, "Save new merged Video File as: ");
+					functionality.Merge m = new functionality.Merge(name, true, null, false);
+					m.start();
+				}
+			}});
+		btmEditPanel.add(btnSaveVid);
+	}
+
+	public static void setSelectedAudio(String message){
+		lblVideo.setText(message);
+	}
+
+	public static JTable getJTable(){
+		return audioTable;
+	}
+	public static boolean isSelectedAudio(){
+		if (lblNewLabel.getText().equals("--")){
+			return false;
+		}
+		return true;
+	}
+	public static void setVidLabel(String text){
+		lblVideo.setText(text);
+	}
+
+	public static JList getList(){
+		return audioList;
+	}
+}
+
