@@ -1,0 +1,458 @@
+package GUI;
+
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import java.awt.Image;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.JButton;
+import javax.swing.BoxLayout;
+
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
+
+import javax.swing.JSlider;
+
+import java.awt.FlowLayout;
+
+import javax.swing.JList;
+import javax.swing.JTable;
+
+import java.awt.GridLayout;
+
+import javax.swing.JLabel;
+import javax.swing.UIManager;
+
+import java.awt.Color;
+
+import javax.swing.border.TitledBorder;
+
+import java.awt.SystemColor;
+import java.io.File;
+import java.io.IOException;
+import java.awt.Dialog.ModalExclusionType;
+import java.awt.Font;
+import java.awt.Canvas;
+import java.awt.CardLayout;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+
+import java.awt.BorderLayout;
+
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.awt.event.ActionEvent;
+
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JSlider;
+import javax.swing.JTable;
+
+import uk.co.caprica.vlcj.player.MediaPlayerFactory;
+import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileView;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+
+import functionality.*;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridLayout;
+import java.awt.List;
+
+import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
+
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.FlowLayout;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+
+
+
+public class Mainframe extends JFrame {
+
+	private static final long serialVersionUID = 1L;
+	private JSlider volSlider;
+	private static EmbeddedMediaPlayer mp;
+
+	protected static boolean ffd = false;
+	protected static boolean rwd = true;
+	protected int videoLength;
+	private static JPanel contentPane;
+	private static EditPanel e = null;
+	// images
+	final private ImageIcon rwd_Icon = new ImageIcon(getClass().getResource("/btnImages/white-rewind-64.png"));
+	final private ImageIcon ffd_Icon = new ImageIcon(getClass().getResource("/btnImages/white-fast-forward-64.png"));
+	final private ImageIcon mute_Icon = new ImageIcon(getClass().getResource("/btnImages/white-mute-64.png"));
+	final private ImageIcon play_Icon = new ImageIcon(getClass().getResource("/btnImages/white-play-64.png"));
+	final private ImageIcon pause_Icon = new ImageIcon(getClass().getResource("/btnImages/white-pause-64.png"));
+	final private ImageIcon vol_Icon = new ImageIcon(getClass().getResource("/btnImages/white-speaker-64.png"));
+	protected JPanel editPanel;
+	private static JSlider videoSlider;
+	private static functionality.videoSliderBar vsb;
+	private static boolean mousePressedPlaying;
+	private int sliderValue;
+	private Merge previewM;
+	static functionality.SaveProjFiles p;
+	static String videoSimpleName, audioSimpleName;
+	private static String videoPathName, audioPathName;
+	private JPanel mpPanel, playBtnsPanel, topEditPanel, videoSliderPanel;
+	private JButton rwdBtn, playBtn, pauseBtn, ffdBtn, volBtn;
+	private JButton openVideoBtn, btnOpenExistingProject, btnOpenEdits;
+
+	/**
+	 * Create the frame.
+	 */
+	public Mainframe() {
+		setTitle("VIDIVOX: by Ida");
+		setBackground(SystemColor.desktop);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(300, 300, 790, 800);
+		contentPane = new JPanel();
+		contentPane.setBackground(Color.BLACK);
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+
+		mpPanel = new JPanel();
+		mpPanel.setBackground(Color.BLACK);
+		mpPanel.setLayout(new BorderLayout());
+		mpPanel.setBounds(15, 59, 762, 570);
+		MediaPlayerFactory mpf = new MediaPlayerFactory();
+		Canvas c = new Canvas();
+		c.setBackground(Color.black);
+		c.setBounds(15, 59, 762, 570);
+		mpPanel.add(c,BorderLayout.CENTER);
+		contentPane.add(mpPanel);
+
+		playBtnsPanel = new JPanel();
+		playBtnsPanel.setBackground(Color.BLACK);
+		playBtnsPanel.setBounds(15, 682, 762, 62);
+		contentPane.add(playBtnsPanel);
+
+		rwdBtn = new JButton();
+		rwdBtn.setBackground(Color.BLACK);
+		rwdBtn.setBounds(15, 5, 69, 45);
+		rwdBtn.setIcon(rwd_Icon);
+		rwdBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Rewind.checkStatus();
+			}
+		});
+		playBtnsPanel.setLayout(null);
+		playBtnsPanel.add(rwdBtn);
+
+		playBtn = new JButton();
+		playBtn.setBackground(Color.BLACK);
+		playBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// boolean once chosen a new video we have a boolean so that it
+				if (!getMp().isPlaying()) {
+					if (getMp() != null) { // checks video exists and mp is
+						// initialized correctly
+						getMp().setRate((float) 1); // set normal rate (incase
+						// ffwding)
+						Rewind.checkPlay();
+					}
+				} else { // if the video is playing
+					if (getMp() != null) {
+						getMp().start();
+						getMp().setRate((float) 1); // set normal rate (incase
+						// ffwding)
+						Rewind.checkPlay();
+					}
+				}
+			}
+		});
+		playBtn.setBounds(99, 5, 69, 45);
+		playBtn.setIcon(play_Icon);
+		playBtnsPanel.add(playBtn);
+
+		pauseBtn = new JButton();
+		pauseBtn.setBackground(Color.BLACK);
+		pauseBtn.setBounds(183, 5, 69, 45);
+		pauseBtn.setIcon(pause_Icon);
+		pauseBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				getMp().pause();
+			}
+		});
+		playBtnsPanel.add(pauseBtn);
+
+		ffdBtn = new JButton();
+		ffdBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (ffd) {
+					ffd = false;
+					getMp().setRate((float) 1);
+				} else {
+					ffd = true;
+					getMp().setRate((float) 10);
+				}
+			};
+		});
+		ffdBtn.setBackground(Color.BLACK);
+		ffdBtn.setBounds(267, 5, 69, 45);
+		ffdBtn.setIcon(ffd_Icon);
+		playBtnsPanel.add(ffdBtn);
+
+		volBtn = new JButton();
+		volBtn.setBackground(Color.BLACK);
+		volBtn.setForeground(Color.WHITE);
+		volBtn.setBounds(469, 5, 61, 45);
+		volBtn.setIcon(vol_Icon);
+		volBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (getMp().isMute()) {
+					volBtn.setIcon(vol_Icon);
+					volSlider.setValue(sliderValue);
+				} else {
+					volBtn.setIcon(mute_Icon);
+					sliderValue = volSlider.getValue();
+					volSlider.setValue(0);
+				}
+				getMp().mute();
+			}
+		});
+		playBtnsPanel.add(volBtn);
+
+		volSlider = new JSlider();
+		sliderValue = 50;
+		volSlider.setBackground(Color.BLACK);
+		volSlider.setBounds(545, 17, 200, 26);
+		volSlider.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				getMp().setVolume(volSlider.getValue());
+				volBtn.setIcon(mute_Icon);
+			}
+		});
+		playBtnsPanel.add(volSlider);
+
+		topEditPanel = new JPanel();
+		topEditPanel.setBackground(Color.BLACK);
+		topEditPanel.setBorder(UIManager.getBorder("Button.border"));
+		topEditPanel.setBounds(0, 0, 777, 62);
+		contentPane.add(topEditPanel);
+		topEditPanel.setLayout(null);
+
+		openVideoBtn = new JButton("OPEN VIDEO");
+		openVideoBtn.setBackground(Color.BLACK);
+		openVideoBtn.setForeground(Color.WHITE);
+		openVideoBtn.setFont(new Font("Tahoma", Font.BOLD, 23));
+		openVideoBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				MediaSelection ms = new MediaSelection(true);
+				getMp().pause();
+				ms.actionPerformed(e);
+			}
+		});
+		openVideoBtn.setBounds(15, 3, 219, 46);
+		topEditPanel.add(openVideoBtn);
+
+		btnOpenExistingProject = new JButton("OPEN PROJECT");
+		btnOpenExistingProject.setForeground(Color.WHITE);
+		btnOpenExistingProject.setBackground(Color.BLACK);
+		btnOpenExistingProject.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser(); 
+				chooser.setCurrentDirectory(new java.io.File(functionality.SaveProjFiles.getPath()));
+				chooser.setDialogTitle("Open Project");
+				chooser.setFileView(fileChoseFilter.getProjFileView());
+				chooser.setFileFilter(fileChoseFilter.getProjFileFilter());
+				chooser.setAcceptAllFileFilterUsed(false);
+				if (chooser.showOpenDialog(run.main.getFrame()) == JFileChooser.APPROVE_OPTION) { 
+					try {
+						p = new SaveProjFiles(chooser.getSelectedFile().getAbsolutePath(),true);
+						p.openProject();
+						p.SaveP();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+
+			}
+		});
+
+		btnOpenExistingProject.setFont(new Font("Tahoma", Font.BOLD, 23));
+		btnOpenExistingProject.setBounds(230, 3, 290, 46);
+		topEditPanel.add(btnOpenExistingProject);
+
+		btnOpenEdits = new JButton("Show Edits >");
+		btnOpenEdits.setFont(new Font("Tahoma", Font.BOLD, 17));
+		btnOpenEdits.setForeground(Color.WHITE);
+		btnOpenEdits.setBackground(Color.BLACK);
+		btnOpenEdits.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (btnOpenEdits.getText().equals("Show Edits >")){
+					// if mp.length == 0 then don't open (disable)
+					e = new EditPanel();
+					if (videoSimpleName != null){
+						e.setVidLabel("VIDEO: " + videoSimpleName);
+					}
+					setBounds(300, 300, 1500, 800);
+					btnOpenEdits.setText("Hide Edits <");
+				} else {
+					e.setVisible(false);
+					e = null;
+					setBounds(300, 300, 790, 800);
+					btnOpenEdits.setText("Show Edits >");
+				}
+			}
+		});
+		btnOpenEdits.setBounds(600, 6, 177, 46);
+		topEditPanel.add(btnOpenEdits);
+
+		videoSliderPanel = new JPanel();
+		videoSliderPanel.setBackground(Color.BLACK);
+		videoSliderPanel.setBounds(15, 630, 762, 54);
+		contentPane.add(videoSliderPanel);
+		videoSliderPanel.setLayout(new BorderLayout(0, 0));
+
+		videoSlider = new JSlider();
+		videoSlider.setBackground(Color.BLACK);
+		vsb = new videoSliderBar(videoSlider);
+		// System.out.println(videoSlider.getValue());
+		videoSlider.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if(mp.isPlaying()) {
+					mousePressedPlaying = true;
+					mp.pause();
+				}
+				else {
+					mousePressedPlaying = false;
+				}
+				vsb.setSliderBasedPosition();
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				vsb.setSliderBasedPosition();
+				vsb.updateUIState();
+			}
+		});
+		videoSlider.setToolTipText("Position");
+		videoSlider.setMaximum(1000);
+		videoSlider.setValue(0);
+
+		videoSliderPanel.add(videoSlider);
+
+		mp = (mpf.newEmbeddedMediaPlayer());
+		getMp().setVideoSurface(mpf.newVideoSurface(c));
+
+		functionality.SaveProjFiles.makeVVFolder();
+		vsb.update();
+	}
+
+	static JPanel getContentPanel(){
+		return contentPane;
+	}
+
+	/**
+	 * Set's video as the input String s from other classes
+	 */
+	public static void setVideoSource(String string){
+		videoPathName = string;
+		String[] temp = videoPathName.split("/");
+		videoSimpleName = temp[temp.length - 1];
+	}
+
+	/**
+	 * Set's audio as the input String s from other classes
+	 */
+	public static void setAudioSource(String s) {
+		audioPathName = s;
+		String[] temp = audioPathName.split("/");
+		audioSimpleName = temp[temp.length - 1];
+	}
+
+	/**
+	 * returns the current video
+	 */
+	public static String getVideoSourcePath() {
+		return videoPathName;
+	}
+
+	/**
+	 * returns the current audio
+	 */
+	public static String getAudioSourcePath() {
+		return audioPathName;
+	}
+
+	public static boolean getRwd() {
+		return rwd;
+	}
+
+	public static void setRwd(boolean rw) {
+		rwd = rw;
+	}
+
+	public static void setFastForward(boolean fwd) {
+		ffd = fwd;
+	}
+
+	public static EmbeddedMediaPlayer getMp() {
+		return mp;
+	}
+
+	public static void pauseMP(){
+		if (mp.isPlaying()) {
+			mp.pause();
+		}
+	}
+
+	public static boolean getMousePressedPlaying(){
+		return mousePressedPlaying;
+	}
+
+	public static videoSliderBar getVSB(){
+		return vsb;
+	}
+	/**
+	 * Changes the current video media being played
+	 */
+	public static void changeVideo() {
+		if (mp.getLength() != 0){
+			System.out.println("mp == 0");
+		} else {
+
+		}
+		Mainframe.getMp().playMedia(videoPathName);
+		if (e != null){
+			EditPanel.setVidLabel("VIDEO : " + videoSimpleName);
+		}
+	}
+
+}
