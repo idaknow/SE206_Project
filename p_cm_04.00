@@ -1,0 +1,34 @@
+package functionality;
+
+import java.io.IOException;
+
+public class CommentaryMerge {
+
+	String name;
+	String text;
+	String extension;
+	
+	public CommentaryMerge(String name, String text, String extension){
+		this.name = name;
+		this.text = text;
+		this.extension = extension;
+	}
+	
+	protected void start(){
+		String commentary = "echo "+ "\"" + text + "\"";
+		//check how name file
+		ProcessBuilder pb1 = new ProcessBuilder("/bin/bash","-c", commentary + " > ."+name+".txt");// creates/ overwrites a temp hidden file with commentary in
+		//creates mp3 file using commentary file (above)
+		ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c","text2wave ."+name+".txt -o " + name + extension);
+		try {
+			Process p1 = pb1.start();
+			p1.waitFor();
+			Process p = pb.start();
+			// add loading popup here
+			p.waitFor();
+			// closes popup here
+		} catch (IOException | InterruptedException e1) {
+			e1.printStackTrace();
+		}
+	}
+}
