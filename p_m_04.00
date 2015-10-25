@@ -1,3 +1,4 @@
+package run;
 
 import javax.swing.SwingUtilities;
 import com.sun.jna.Native;
@@ -11,6 +12,9 @@ import uk.co.caprica.vlcj.runtime.RuntimeUtil;
  *
  */
 public class main {
+	
+	private static GUI.Mainframe mf;
+	
 	public static void main(String[] args) {
 		NativeLibrary.addSearchPath(
 				RuntimeUtil.getLibVlcLibraryName(), "/Applications/vlc-2.0.0/VLC.app/Contents/MacOS/lib"
@@ -20,8 +24,13 @@ public class main {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				new GUI.Mainframe();
+				GUI.Mainframe mf = new GUI.Mainframe();
+				mf.setVisible(true);
 			}
 		});
+	}
+	
+	public static GUI.Mainframe getFrame(){
+		return mf;
 	}
 }
